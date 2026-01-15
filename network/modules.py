@@ -147,17 +147,25 @@ EquipmentRenderOrder = [
 
 class AttackStyle(IntEnum):
     None_ = 0
-    Stab = 1
-    Slash = 2
-    Defensive = 3
-    Crush = 4
-    Shared = 5
-    Hack = 6
-    Chop = 7
-    Accurate = 8
-    Fast = 9
-    Focused = 10
-    LongRange = 11
+
+    # Melee
+    Stab = 1 # Accuracy experience and boosts accuracy
+    Slash = 2 # Strength experience and boosts maximum damage
+    Defensive = 3 # Defense experience and boosts damage absorbed
+    Crush = 4 # Accuracy + Strength experience and boosts accuracy/damage
+    Shared = 5 # Accuracy + Strength + Defense experience and boosts all
+    Hack = 6 # Strength + Defense experience boosts damage and absorbs damage
+    Chop = 7 # Accuracy + Defense experience boosts accuracy and absorbs damage
+
+    # Archery
+    Accurate = 8 # Higher accuracy but slower
+    Fast = 9 # Faster but lower accuracy
+
+    # Magic
+    Focused = 10 # Slower but higher damage/accuracy
+
+    # Archery and Magic
+    LongRange = 11 # Increased attack range and less accurate
 
 class Hovering(IntEnum):
     Colliding = 0
@@ -177,9 +185,9 @@ class AudioTypes(IntEnum):
     SFX = 1
 
 class PoisonTypes(IntEnum):
-    Venom = 0
-    Plague = 1
-    Persistent = 2
+    Venom = 0 # When a mob hits you
+    Plague = 1 # When entering a poisoned area.
+    Persistent = 2 # Poison that doesn't wear off until it's cured.
 
 class Warps(IntEnum):
     Mudwich = 0
@@ -398,51 +406,51 @@ class BannerCrests(str, Enum):
     Phoenix = 'phoenix'
 
 class Constants:
-    MAX_STACK = 2_147_483_647
-    MAX_LEVEL = 120
-    INVENTORY_SIZE = 25
-    BANK_SIZE = 420
-    DROP_PROBABILITY = 100_000
-    MAX_PROFESSION_LEVEL = 99
-    HEAL_RATE = 7000
-    EFFECT_RATE = 10_000
-    STORE_UPDATE_FREQUENCY = 20_000
-    MAP_DIVISION_SIZE = 48
-    SPAWN_POINT = '328,892'
-    TUTORIAL_QUEST_KEY = 'tutorial'
-    ALCHEMY_QUEST_KEY = 'scientistspotion'
-    CRAFTING_QUEST_KEY = 'artsandcrafts'
-    TUTORIAL_SPAWN_POINT = '133,562'
+    MAX_STACK = 2_147_483_647 # Maximum default stack size for a stackable item.
+    MAX_LEVEL = 120 # Maximum attainable level.
+    INVENTORY_SIZE = 25 # Maximum inventory size
+    BANK_SIZE = 420 # Maximum bank size
+    DROP_PROBABILITY = 100_000 # 1 in 100000
+    MAX_PROFESSION_LEVEL = 99 # Totally not influenced by another game lol
+    HEAL_RATE = 7000 # healing every 7 seconds
+    EFFECT_RATE = 10_000 # effects every 10 seconds
+    STORE_UPDATE_FREQUENCY = 20_000 # update store every 20 seconds
+    MAP_DIVISION_SIZE = 48 # The size of a region the map is split into.
+    SPAWN_POINT = '328,892' # Default starting point outside the tutorial
+    TUTORIAL_QUEST_KEY = 'tutorial' # key of the tutorial quest.
+    ALCHEMY_QUEST_KEY = 'scientistspotion' # key of the alchemy quest.
+    CRAFTING_QUEST_KEY = 'artsandcrafts' # key of the crafting quest.
+    TUTORIAL_SPAWN_POINT = '133,562' # 'x,y' values
     JAIL_SPAWN_POINT = '110,915'
     RESOURCE_RESPAWN = 30_000
     TREE_RESPAWN = 25_000
-    CHEST_RESPAWN = 50_000
-    SKILL_LOOP = 1000
-    MAX_ACCURACY = 0.45
-    EDIBLE_COOLDOWN = 1500
-    CRAFT_COOLDOWN = 1500
-    ARCHER_ATTACK_RANGE = 8
-    MAX_CONNECTIONS = 16
-    EXPERIENCE_PER_HIT = 2
-    SNOW_POTION_DURATION = 60_000
-    FIRE_POTION_DURATION = 60_000
-    FREEZING_DURATION = 60_000
-    BURNING_DURATION = 60_000
-    TERROR_DURATION = 60_000
-    LOITERING_THRESHOLD = 90_000
-    STUN_DURATION = 10_000
+    CHEST_RESPAWN = 50_000 # 50 seconds
+    SKILL_LOOP = 1000 # How often we check the loop of a skill
+    MAX_ACCURACY = 0.45 # Maximum attainable accuracy for a character.
+    EDIBLE_COOLDOWN = 1500 # 1.5 seconds between eating foods to prevent spam.
+    CRAFT_COOLDOWN = 1500 # 1.5 seconds between crafting items to prevent spam.
+    ARCHER_ATTACK_RANGE = 8 # Default attack range for bows if no other range is specified.
+    MAX_CONNECTIONS = 16 # Maximum number of connections per IP address.
+    EXPERIENCE_PER_HIT = 2 # Amount of experience received per 1 damage dealt.
+    SNOW_POTION_DURATION = 60_000 # 60 seconds
+    FIRE_POTION_DURATION = 60_000 # 60 seconds
+    FREEZING_DURATION = 60_000 # 60 seconds
+    BURNING_DURATION = 60_000 # 60 seconds
+    TERROR_DURATION = 60_000 # 60 seconds
+    LOITERING_THRESHOLD = 90_000 # 90 seconds until loitering activates
+    STUN_DURATION = 10_000 # 10 seconds
     COLD_EFFECT_DAMAGE = 10
     BURNING_EFFECT_DAMAGE = 20
-    ATTACKER_TIMEOUT = 20_000
-    MAX_GUILD_MEMBERS = 50
-    EVENTS_CHECK_INTERVAL = 3_600_000
+    ATTACKER_TIMEOUT = 20_000 # 20 seconds
+    MAX_GUILD_MEMBERS = 50 # Maximum number of members in a guild
+    EVENTS_CHECK_INTERVAL = 3_600_000 # Every 1 hour
 
 class MinigameConstants:
-    TEAM_WAR_COUNTDOWN = 240
-    TEAM_WAR_MIN_PLAYERS = 2
-    COURSING_COUNTDOWN = 45
-    COURSING_MIN_PLAYERS = 2
-    COURSING_SCORE_DIVISOR = 10
+    TEAM_WAR_COUNTDOWN = 240 # 240 seconds (4 minutes) in the lobby and in-game
+    TEAM_WAR_MIN_PLAYERS = 2 # Minimum number of players to start a team war
+    COURSING_COUNTDOWN = 45 # 360 seconds (6 minutes) in the lobby and in-game
+    COURSING_MIN_PLAYERS = 2 # Minimum number of players to start coursing
+    COURSING_SCORE_DIVISOR = 10 # Divide the score by 100 to get the number of points
 
 class APIConstants(IntEnum):
     UNHANDLED_HTTP_METHOD = 0
@@ -450,21 +458,23 @@ class APIConstants(IntEnum):
     MALFORMED_PARAMETERS = 2
     PLAYER_NOT_ONLINE = 3
 
+# Defaults that apply to all types of entities
 class Defaults:
-    MOVEMENT_SPEED = 220
-    ATTACK_RATE = 1000
-    POISON_CHANCE = 15
+    MOVEMENT_SPEED = 220 # 250 milliseconds to traverse one tile
+    ATTACK_RATE = 1000 # every 1 second
+    POISON_CHANCE = 15 # 15 in (235 - level) chance to poison
 
 class ItemDefaults:
-    RESPAWN_DELAY = 30_000
-    DESPAWN_DURATION = 34_000
-    BLINK_DELAY = 30_000
+    RESPAWN_DELAY = 30_000 # 30 seconds
+    DESPAWN_DURATION = 34_000 # 34 seconds of blinking before despawning
+    BLINK_DELAY = 30_000 # 40 seconds until item starts blinking.
 
+# Defaults that apply specifically to mobs
 class MobDefaults:
-    AGGRO_RANGE = 2
-    RESPAWN_DELAY = 60_000
-    ROAM_DISTANCE = 7
-    ROAM_FREQUENCY = 17_000
+    AGGRO_RANGE = 2 # Default aggro range of 2 tiles
+    RESPAWN_DELAY = 60_000 # 60 seconds to respawn
+    ROAM_DISTANCE = 7 # 7 tiles away from spawn point
+    ROAM_FREQUENCY = 17_000 # Roam interval every 35 seconds
     HEALTH_LEVEL = 1
     ACCURACY_LEVEL = 1
     STRENGTH_LEVEL = 1
@@ -473,11 +483,13 @@ class MobDefaults:
     ARCHERY_LEVEL = 1
     ATTACK_LEVEL = 1
 
+# Flags used by Tiled to determine tile rotation.
 class MapFlags(IntEnum):
     DIAGONAL_FLAG = 0x20_00_00_00
     VERTICAL_FLAG = 0x40_00_00_00
     HORIZONTAL_FLAG = 0x80_00_00_00
 
+# Handles the two states of a resource, default or depleted.
 class ResourceState(IntEnum):
     Default = 0
     Depleted = 1

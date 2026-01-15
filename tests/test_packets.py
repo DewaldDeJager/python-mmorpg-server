@@ -230,9 +230,39 @@ def test_friends_packet():
     assert packet.serialize() == expected
 
 def test_guild_packet():
-    data = GuildPacketData(name="MyGuild")
+    # Test with complex nested data
+    member = Member(username="user1", rank=GuildRank.Veteran, join_date=100, server_id=1)
+    decoration = Decoration(
+        banner=BannerColour.Red,
+        outline=BannerOutline.StyleOne,
+        outline_colour=BannerColour.Green,
+        crest=BannerCrests.Star
+    )
+
+    data = GuildPacketData(
+        name="MyGuild",
+        members=[member],
+        decoration=decoration,
+        rank=GuildRank.Master
+    )
+
     packet = GuildPacket(opcode=GuildOpcode.Create, data=data)
-    expected = [Packets.Guild.value, GuildOpcode.Create.value, {'name': 'MyGuild'}]
+
+    expected = [
+        Packets.Guild.value,
+        GuildOpcode.Create.value,
+        {
+            'name': 'MyGuild',
+            'members': [{'username': 'user1', 'rank': GuildRank.Veteran.value, 'joinDate': 100, 'serverId': 1}],
+            'decoration': {
+                'banner': BannerColour.Red.value,
+                'outline': BannerOutline.StyleOne.value,
+                'outlineColour': BannerColour.Green.value,
+                'crest': BannerCrests.Star.value
+            },
+            'rank': GuildRank.Master.value
+        }
+    ]
     assert packet.serialize() == expected
 
 def test_heal_packet():
@@ -343,9 +373,27 @@ def test_pvp_packet():
     assert packet.serialize() == expected
 
 def test_quest_packet():
-    data = QuestPacketData(quests=[])
+    quest_data = QuestData(
+        key="quest1",
+        stage=1,
+        sub_stage=0,
+        completed_sub_stages=["sub1"]
+    )
+    data = QuestPacketData(quests=[quest_data])
     packet = QuestPacket(opcode=QuestOpcode.Batch, data=data)
-    expected = [Packets.Quest.value, QuestOpcode.Batch.value, {'quests': []}]
+
+    expected = [
+        Packets.Quest.value,
+        QuestOpcode.Batch.value,
+        {
+            'quests': [{
+                'key': 'quest1',
+                'stage': 1,
+                'subStage': 0,
+                'completedSubStages': ['sub1']
+            }]
+        }
+    ]
     assert packet.serialize() == expected
 
 def test_rank_packet():
@@ -382,9 +430,18 @@ def test_respawn_packet():
     assert packet.serialize() == expected
 
 def test_skill_packet():
-    data = SerializedSkills(skills=[], cheater=False)
+    skill = SkillData(type=Skills.Alchemy, experience=1000, level=10)
+    data = SerializedSkills(skills=[skill], cheater=False)
     packet = SkillPacket(opcode=SkillOpcode.Batch, data=data)
-    expected = [Packets.Skill.value, SkillOpcode.Batch.value, {'skills': [], 'cheater': False}]
+
+    expected = [
+        Packets.Skill.value,
+        SkillOpcode.Batch.value,
+        {
+            'skills': [{'type': Skills.Alchemy.value, 'experience': 1000, 'level': 10}],
+            'cheater': False
+        }
+    ]
     assert packet.serialize() == expected
 
 def test_spawn_packet():
@@ -396,9 +453,24 @@ def test_spawn_packet():
     assert packet.serialize() == expected
 
 def test_store_packet():
-    data = StorePacketData(key="store")
+    item = SerializedStoreItem(key="sword", name="Iron Sword", count=1, price=100)
+    data = StorePacketData(key="general_store", items=[item], currency="gold")
     packet = StorePacket(opcode=StoreOpcode.Open, data=data)
-    expected = [Packets.Store.value, StoreOpcode.Open.value, {'key': 'store'}]
+
+    expected = [
+        Packets.Store.value,
+        StoreOpcode.Open.value,
+        {
+            'key': 'general_store',
+            'currency': 'gold',
+            'items': [{
+                'key': 'sword',
+                'name': 'Iron Sword',
+                'count': 1,
+                'price': 100
+            }]
+        }
+    ]
     assert packet.serialize() == expected
 
 def test_sync_packet():

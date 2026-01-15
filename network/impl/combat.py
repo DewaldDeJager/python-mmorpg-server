@@ -5,8 +5,8 @@ from ..opcodes import Combat as CombatOpcode
 from ..shared_types import HitData
 
 class CombatPacketData(CamelModel):
-    instance: str
-    target: str
+    instance: str  # The entity the combat packet revolves around.
+    target: str  # Instance of the targeted entity.
     hit: HitData
 
 class CombatPacket(Packet):

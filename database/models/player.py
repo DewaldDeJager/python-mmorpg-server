@@ -13,8 +13,8 @@ class ResetToken(CamelModel):
     expiration: int
 
 class PoisonInfo(CamelModel):
-    type: int
-    remaining: int
+    type: int # Type of poison.
+    remaining: int # How much of the poison is left.
 
 class SerializedDuration(CamelModel):
     remaining_time: int

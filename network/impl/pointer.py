@@ -4,6 +4,13 @@ from packages.server_python.network.packet import Packet
 from packages.server_python.network.packets import Packets
 from packages.server_python.network import opcodes as Opcodes
 
+class PointerData(CamelModel):
+    type: int
+    x: Optional[int] = None
+    y: Optional[int] = None
+    instance: Optional[str] = None
+    button: Optional[str] = None
+
 class PointerPacketData(CamelModel):
     instance: Optional[str] = None
     x: Optional[int] = None

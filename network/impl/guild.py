@@ -9,7 +9,7 @@ class Member(CamelModel):
     username: str
     rank: Optional[GuildRank] = None
     join_date: Optional[int] = None
-    server_id: Optional[int] = None
+    server_id: Optional[int] = None  # -1 if offline
 
 class Decoration(CamelModel):
     banner: BannerColour
@@ -17,10 +17,28 @@ class Decoration(CamelModel):
     outline_colour: BannerColour
     crest: BannerCrests
 
+# Contains only necessary information to be passed to client.
 class ListInfo(CamelModel):
     name: str
     members: int
     decoration: Decoration
+
+class GuildData(CamelModel):
+    identifier: str
+    name: str
+    creation_date: int
+    owner: str
+    invite_only: bool
+    experience: int
+    decoration: Decoration
+    members: List[Member]
+
+# Used to relay update information to other players.
+class UpdateInfo(CamelModel):
+    opcode: Opcodes.Guild
+    username: str
+    server_id: Optional[int] = None
+    rank: Optional[GuildRank] = None
 
 class GuildPacketData(CamelModel):
     identifier: Optional[str] = None

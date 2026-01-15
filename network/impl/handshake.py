@@ -5,17 +5,17 @@ from ..packets import Packets
 
 class ClientHandshakePacketData(CamelModel):
     type: Literal['client']
-    instance: Optional[str] = None
+    instance: Optional[str] = None # Player's instance.
     server_id: Optional[int] = None
     server_time: Optional[int] = None
 
 class HubHandshakePacketData(CamelModel):
     type: Literal['hub']
-    g_ver: str
+    g_ver: str # Game version.
     name: str
     server_id: int
-    access_token: str
-    remote_host: str
+    access_token: str # Denied if mismatches
+    remote_host: str # Relayed to game clients as the server's IP.
     port: int
     players: List[str]
     max_players: int

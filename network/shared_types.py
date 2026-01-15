@@ -21,6 +21,7 @@ class Bonuses(CamelModel):
     archery: int
     magic: int
 
+# This is for items that have a lamp effect.
 class LampData(CamelModel):
     distance: int
     colour: str
@@ -66,6 +67,12 @@ class HubChatPacketData(CamelModel):
     target: Optional[str] = None
     success: Optional[bool] = None
     not_found: Optional[bool] = None
+
+class PopupData(CamelModel):
+    title: str
+    text: str
+    colour: Optional[str] = None
+    sound_effect: Optional[str] = None
 
 class EntityDisplayInfo(CamelModel):
     instance: str
