@@ -1,0 +1,18 @@
+[project]
+name = "python-mmorpg-server"
+version = "0.0.1"
+description = "Python MMORPG Server"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.100.0",
+    "pydantic>=2.0.0",
+    "uvicorn>=0.23.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0.0",
+]
+
+[tool.uv]
+package = false
