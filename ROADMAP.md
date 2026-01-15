@@ -19,8 +19,9 @@ This is the bridge between your Pydantic packets and the network.
     - Manages rate limiting and packet queuing.
 
 ## 3. Database Layer
+- [x] **Database Strategy**: Selected **Raw Motor + Pydantic** to minimize dependencies and match the TS architecture.
 - [ ] **Driver**: Use `motor` (AsyncIO driver for MongoDB) to prevent blocking the game loop.
-- [ ] **Models**: Port the Mongoose schemas from `@kaetram/common/database` to **Beanie** (an ODM for MongoDB based on Pydantic) or raw Pydantic models.
+- [x] **Models**: Port the TypeScript interfaces (e.g., `PlayerInfo`) from `@kaetram/common/database` to raw Pydantic models.
 
 ## 4. The Game Loop
 - [ ] **Main Loop**: Implement a specialized `asyncio` loop that ticks 60 times per second (or your target tick rate).

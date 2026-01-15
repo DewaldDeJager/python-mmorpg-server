@@ -19,6 +19,9 @@ class QuestData(CamelModel):
     difficulty: Optional[str] = None
     stage_count: Optional[int] = None
 
+class SerializedQuest(CamelModel):
+    quests: List[QuestData]
+
 class QuestPacketData(CamelModel):
     key: Optional[str] = None
     stage: Optional[int] = None
