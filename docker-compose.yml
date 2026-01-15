@@ -1,0 +1,27 @@
+services:
+  server:
+    build:
+      context: ./packages/server_python
+      dockerfile: Dockerfile
+    container_name: python-mmorpg-server
+    ports:
+      - "9001:9001"
+    environment:
+      - PORT=9001
+      - MONGODB_HOST=mongodb
+      - MONGODB_PORT=27017
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
