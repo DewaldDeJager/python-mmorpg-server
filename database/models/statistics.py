@@ -1,5 +1,5 @@
 from typing import Dict, List
-from packages.server_python.network.model import CamelModel
+from ...network.model import CamelModel
 
 class StatisticsData(CamelModel):
     pvp_kills: int

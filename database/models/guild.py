@@ -1,6 +1,6 @@
 from typing import List
-from packages.server_python.network.model import CamelModel
-from packages.server_python.network.impl.guild import Decoration, Member
+from ...network.model import CamelModel
+from ...network.impl.guild import Decoration, Member
 
 class GuildModel(CamelModel):
     identifier: str

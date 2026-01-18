@@ -1,12 +1,12 @@
 from typing import List, Optional, Dict
-from packages.server_python.network.model import CamelModel
-from packages.server_python.network.modules import Ranks, Orientation
-from packages.server_python.network.impl.equipment import SerializedEquipment
-from packages.server_python.network.shared_types import SerializedContainer
-from packages.server_python.network.impl.quest import SerializedQuest
-from packages.server_python.network.impl.achievement import SerializedAchievement
-from packages.server_python.network.impl.skill import SerializedSkills
-from packages.server_python.network.impl.ability import SerializedAbility
+from ...network.model import CamelModel
+from ...network.modules import Ranks, Orientation
+from ...network.impl.equipment import SerializedEquipment
+from ...network.shared_types import SerializedContainer
+from ...network.impl.quest import SerializedQuest
+from ...network.impl.achievement import SerializedAchievement
+from ...network.impl.skill import SerializedSkills
+from ...network.impl.ability import SerializedAbility
 
 class ResetToken(CamelModel):
     token: str
