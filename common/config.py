@@ -37,9 +37,9 @@ class Config(BaseSettings):
 
     # === Database ===
     database: DatabaseTypes = "mongodb"
-    skip_database: bool = True
+    skip_database: bool = False
 
-    mongodb_host: str = "mongodb"
+    mongodb_host: str = "localhost"
     mongodb_port: int = 27017
     mongodb_user: str = ""
     mongodb_password: str = ""
