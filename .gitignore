@@ -20,9 +20,6 @@ dist/
 .idea/
 .vscode/
 
-# Environment Variables
-.env
-
 # OS
 .DS_Store
 Thumbs.db
