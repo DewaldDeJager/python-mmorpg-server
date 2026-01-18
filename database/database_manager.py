@@ -4,6 +4,10 @@ from common.log import log
 from database.mongodb import MongoDB
 
 class Database:
+    """
+    Database factory class that manages the initialization of the database engine.
+    Currently only supports MongoDB.
+    """
     def __init__(self, database_type: str):
         self.database: Optional[MongoDB] = None
 

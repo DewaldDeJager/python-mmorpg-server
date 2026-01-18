@@ -5,6 +5,10 @@ from database.mongodb_loader import Loader
 from database.mongodb_creator import Creator
 
 class MongoDB:
+    """
+    MongoDB connection manager that handles the asynchronous connection to the database.
+    It initializes the Loader and Creator classes upon a successful connection.
+    """
     def __init__(
         self,
         host: str,
@@ -33,6 +37,10 @@ class MongoDB:
         self.fail_callback = None
 
     async def create_connection(self):
+        """
+        Attempts to connect to MongoDB. Times out after 5 seconds if
+        no MongoDB server is present for the given host.
+        """
         try:
             client = AsyncIOMotorClient(
                 self.connection_url,
