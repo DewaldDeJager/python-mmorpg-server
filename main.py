@@ -1,15 +1,23 @@
 import asyncio
+import json
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 
 from common.config import config
 from common.log import log
 from database.database_manager import Database
+from network.socket_handler import SocketHandler
+from network.network_manager import NetworkManager
+from network.connection import Connection
+from fastapi import WebSocket, WebSocketDisconnect
+import uuid
 
 class Main:
     def __init__(self):
         self.database = Database(config.database).get_database()
         self.ready = False
+        self.socket_handler = SocketHandler()
+        self.network = NetworkManager(self.database, self.socket_handler)
 
         if self.database:
             self.database.on_ready(self.handle_ready)
@@ -78,6 +86,57 @@ async def root():
 async def health_check():
     return {"status": "ok", "ready": main_instance.ready}
 
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    
+    # Create a unique instance ID for this connection
+    instance_id = str(uuid.uuid4())
+    connection = Connection(instance_id, websocket)
+    
+    # Register the connection in the socket handler
+    main_instance.socket_handler.add(connection)
+    
+    # Notify the network manager about the new connection
+    await main_instance.network.handle_connection(connection)
+    
+    try:
+        while not connection.closed:
+            # Wait for messages from the client
+            data = await websocket.receive_text()
+            
+            # Rate limiting check
+            connection.message_rate += 1
+            if connection.message_rate > 50: # Example limit
+                await connection.reject("spam")
+                break
+                
+            # Duplicate check
+            if connection.is_duplicate(data):
+                continue
+            
+            # Refresh timeout on activity
+            connection.refresh_timeout()
+            
+            # Parse the message (typically JSON)
+            try:
+                message = json.loads(data)
+                if connection.message_callback:
+                    connection.message_callback(message)
+                else:
+                    # Fallback if no callback is registered yet (e.g. before Player is created)
+                    log.debug(f"Received message from {connection.address} without callback: {message}")
+            except json.JSONDecodeError:
+                log.warning(f"Received non-JSON message from {connection.address}: {data}")
+                
+    except WebSocketDisconnect:
+        await connection.handle_close()
+    except Exception as e:
+        log.error(f"WebSocket error for {connection.address}: {e}")
+        await connection.handle_close(str(e))
+    finally:
+        main_instance.socket_handler.remove(instance_id)
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host=config.host, port=config.port)
+    uvicorn.run(app, host=config.host, port=config.port, reload=config.debugging)
