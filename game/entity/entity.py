@@ -19,7 +19,7 @@ class Entity(ABC):
         self.instance = instance
         self.key = key
         
-        self.type: int = self._get_entity_type(self.instance)
+        self.type: EntityType = self._get_entity_type(self.instance)
         self.name: str = ""
 
         self.x: int = x
@@ -41,17 +41,30 @@ class Entity(ABC):
 
         self.update_position(x, y)
 
-    def _get_entity_type(self, instance: str) -> int:
+    def _get_entity_type(self, instance: Optional[str]) -> EntityType:
         """
         Extracts the type of entity by taking the first part of the instance ID.
         In TypeScript: parseInt(instance.split('-')[0])
+
+        Validates that the instance string follows the format "{type}-{id}" and
+        that the type exists within the EntityType enum.
+
+        :param instance: The instance string to parse.
+        :raises ValueError: If the instance string is invalid or the type is not recognized.
+        :return: The corresponding EntityType.
         """
-        if not instance or "-" not in instance:
-            return -1
+        if instance is None:
+            raise ValueError("Instance string cannot be None")
+
+        if "-" not in instance:
+            raise ValueError(f"Invalid instance string format: '{instance}'. Expected '{{type}}-{{id}}'")
+
         try:
-            return int(instance.split("-")[0])
-        except (ValueError, IndexError):
-            return -1
+            type_value = int(instance.split("-")[0])
+            # Leveraging IntEnum: EntityType(value) will raise a ValueError if value is not in the enum.
+            return EntityType(type_value)
+        except (ValueError, IndexError) as e:
+            raise ValueError(f"Could not parse a valid EntityType from instance string: '{instance}'") from e
 
     def set_position(self, x: int, y: int) -> None:
         """
