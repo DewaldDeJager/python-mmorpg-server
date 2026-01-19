@@ -81,14 +81,19 @@ class EntityDisplayInfo(CamelModel):
     exclamation: Optional[str] = None
 
 class EntityData(CamelModel):
+    # Entity data
     instance: str
     type: int
     key: str
     name: str
     x: int
     y: int
-    colour: Optional[str] = None
-    scale: Optional[float] = None
+
+    # Optional parameters
+    colour: Optional[str] = None  # Name colour
+    scale: Optional[float] = None  # Custom scale for the entity
+
+    # Character data
     movement_speed: Optional[int] = None
     hit_points: Optional[int] = None
     max_hit_points: Optional[int] = None
@@ -96,9 +101,14 @@ class EntityData(CamelModel):
     level: Optional[int] = None
     hidden_name: Optional[bool] = None
     orientation: Optional[Orientation] = None
-    count: Optional[int] = None
-    enchantments: Optional[Enchantments] = None
-    owner_instance: Optional[str] = None
-    target_instance: Optional[str] = None
-    hit: Optional[HitData] = None
+
+    # TODO: Item data
+    # count: Optional[int] = None
+    # enchantments: Optional[Enchantments] = None
+
+    # TODO: Projectile data
+    # owner_instance: Optional[str] = None
+    # target_instance: Optional[str] = None
+    # hit: Optional[HitData] = None
+
     display_info: Optional[EntityDisplayInfo] = None
