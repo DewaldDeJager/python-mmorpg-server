@@ -190,6 +190,10 @@ class PoisonTypes(IntEnum):
     Persistent = 2 # Poison that doesn't wear off until it's cured.
 
 class PoisonInfo:
+    """
+    Metadata for different poison types.
+    Duration and rate are specified in seconds.
+    """
     def __init__(self, name: str, damage: int, duration: int, rate: int):
         self.name = name
         self.damage = damage
