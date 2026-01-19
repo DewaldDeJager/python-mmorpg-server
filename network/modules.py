@@ -189,6 +189,19 @@ class PoisonTypes(IntEnum):
     Plague = 1 # When entering a poisoned area.
     Persistent = 2 # Poison that doesn't wear off until it's cured.
 
+class PoisonInfo:
+    def __init__(self, name: str, damage: int, duration: int, rate: int):
+        self.name = name
+        self.damage = damage
+        self.duration = duration
+        self.rate = rate
+
+PoisonData = {
+    PoisonTypes.Venom: PoisonInfo("Venom", 5, 30, 2),
+    PoisonTypes.Plague: PoisonInfo("Plague", 5, 60, 1),
+    PoisonTypes.Persistent: PoisonInfo("Persistent", 2, -1, 1),
+}
+
 class Warps(IntEnum):
     Mudwich = 0
     Aynor = 1
