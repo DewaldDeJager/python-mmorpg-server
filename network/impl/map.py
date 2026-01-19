@@ -2,8 +2,8 @@ import gzip
 import json
 import base64
 from typing import Any
-from packages.server_python.network.packet import Packet
-from packages.server_python.network.packets import Packets
+from network.packet import Packet
+from network.packets import Packets
 
 MapPacketData = Any
 

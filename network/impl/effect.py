@@ -1,8 +1,8 @@
-from packages.server_python.network.model import CamelModel
-from packages.server_python.network.packet import Packet
-from packages.server_python.network.packets import Packets
-from packages.server_python.network import opcodes as Opcodes
-from packages.server_python.network.modules import Effects
+from network.model import CamelModel
+from network.packet import Packet
+from network.packets import Packets
+from network import opcodes as Opcodes
+from network.modules import Effects
 
 class EffectPacketData(CamelModel):
     instance: str

@@ -1,12 +1,12 @@
 from typing import List, Optional, Dict
-from ...network.model import CamelModel
-from ...network.modules import Ranks, Orientation
-from ...network.impl.equipment import SerializedEquipment
-from ...network.shared_types import SerializedContainer
-from ...network.impl.quest import SerializedQuest
-from ...network.impl.achievement import SerializedAchievement
-from ...network.impl.skill import SerializedSkills
-from ...network.impl.ability import SerializedAbility
+from network.model import CamelModel
+from network.modules import Ranks, Orientation
+from network.impl.equipment import SerializedEquipment
+from network.shared_types import SerializedContainer
+from network.impl.quest import SerializedQuest
+from network.impl.achievement import SerializedAchievement
+from network.impl.skill import SerializedSkills
+from network.impl.ability import SerializedAbility
 
 class ResetToken(CamelModel):
     token: str

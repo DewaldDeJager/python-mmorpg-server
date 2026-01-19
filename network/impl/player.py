@@ -1,11 +1,11 @@
 from typing import Optional, List
-from packages.server_python.network.model import CamelModel
-from packages.server_python.network.packet import Packet
-from packages.server_python.network.packets import Packets
-from packages.server_python.network import opcodes as Opcodes
-from packages.server_python.network.shared_types import EntityData
-from packages.server_python.network.modules import Ranks
-from packages.server_python.network.impl.equipment import EquipmentData
+from network.model import CamelModel
+from network.packet import Packet
+from network.packets import Packets
+from network import opcodes as Opcodes
+from network.shared_types import EntityData
+from network.modules import Ranks
+from network.impl.equipment import EquipmentData
 
 class PlayerPacketData(CamelModel):
     username: str

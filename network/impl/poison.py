@@ -1,5 +1,5 @@
-from packages.server_python.network.packet import Packet
-from packages.server_python.network.packets import Packets
+from network.packet import Packet
+from network.packets import Packets
 
 PoisonPacketData = int
 

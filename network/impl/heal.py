@@ -1,7 +1,7 @@
-from packages.server_python.network.model import CamelModel
-from packages.server_python.network.packet import Packet
-from packages.server_python.network.packets import Packets
-from packages.server_python.network.modules import HealTypes
+from network.model import CamelModel
+from network.packet import Packet
+from network.packets import Packets
+from network.modules import HealTypes
 
 class HealPacketData(CamelModel):
     instance: str
