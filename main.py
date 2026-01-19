@@ -11,6 +11,7 @@ from network.network_manager import NetworkManager
 from network.connection import Connection
 from network.modules import EntityType
 from common.utils import utils
+from game.info.loader import Loader
 from fastapi import WebSocket, WebSocketDisconnect
 
 class Main:
@@ -34,6 +35,8 @@ class Main:
             await self.database.create_connection()
         else:
             self.handle_ready(without_database=True)
+
+        Loader()
 
     def handle_ready(self, without_database: bool = False):
         self.ready = True
@@ -90,35 +93,35 @@ async def health_check():
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    
+
     # Create a unique instance ID for this connection
     instance_id = utils.create_instance(EntityType.Player)
     connection = Connection(instance_id, websocket)
-    
+
     # Register the connection in the socket handler
     main_instance.socket_handler.add(connection)
-    
+
     # Notify the network manager about the new connection
     await main_instance.network.handle_connection(connection)
-    
+
     try:
         while not connection.closed:
             # Wait for messages from the client
             data = await websocket.receive_text()
-            
+
             # Rate limiting check
             connection.message_rate += 1
             if connection.message_rate > 50: # Example limit
                 await connection.reject("spam")
                 break
-                
+
             # Duplicate check
             if connection.is_duplicate(data):
                 continue
-            
+
             # Refresh timeout on activity
             connection.refresh_timeout()
-            
+
             # Parse the message (typically JSON)
             try:
                 message = json.loads(data)
@@ -129,7 +132,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     log.debug(f"Received message from {connection.address} without callback: {message}")
             except json.JSONDecodeError:
                 log.warning(f"Received non-JSON message from {connection.address}: {data}")
-                
+
     except WebSocketDisconnect:
         await connection.handle_close()
     except Exception as e:
