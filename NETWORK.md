@@ -8,7 +8,7 @@ The server uses **FastAPI**'s WebSocket support to handle incoming connections.
 
 - **FastAPI WebSocket Endpoint**: The `/ws` endpoint in `main.py` accepts incoming WebSocket connections.
 - **Connection Lifecycle**: For each new connection:
-    1. A unique `instance_id` (UUID) is generated.
+    1. A unique `instance_id` (format: `{{type}}-{{id}}`) is generated.
     2. A `Connection` wrapper is created for the `WebSocket` object.
     3. The connection is registered with the `SocketHandler`.
     4. The `NetworkManager` is notified to handle initial connection logic (e.g., ban checks).

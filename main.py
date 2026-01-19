@@ -9,8 +9,9 @@ from database.database_manager import Database
 from network.socket_handler import SocketHandler
 from network.network_manager import NetworkManager
 from network.connection import Connection
+from network.modules import EntityType
+from common.utils import utils
 from fastapi import WebSocket, WebSocketDisconnect
-import uuid
 
 class Main:
     def __init__(self):
@@ -91,7 +92,7 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     
     # Create a unique instance ID for this connection
-    instance_id = str(uuid.uuid4())
+    instance_id = utils.create_instance(EntityType.Player)
     connection = Connection(instance_id, websocket)
     
     # Register the connection in the socket handler
