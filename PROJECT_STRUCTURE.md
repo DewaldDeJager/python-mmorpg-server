@@ -28,6 +28,7 @@ Handles all interactions with the MongoDB database.
 
 ### `game/`
 Contains the core game engine logic, state management, and entity systems.
+- `world.py`: Manages the game world, entities, and regions (Stub).
 - `entity/`: Defines the base `Entity` class and specialized sub-entities.
     - `character/`: Base classes for characters (mobile entities).
         - `combat/`: Combat system logic (e.g., `Hit`).
