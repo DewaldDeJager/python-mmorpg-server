@@ -2,16 +2,16 @@ import pytest
 import gzip
 import json
 import base64
-from ..network.packets import Packets
-from ..network.modules import (
+from network.packets import Packets
+from network.modules import (
     Orientation, Equipment as EquipmentModule, ContainerType, AbilityType, Actions,
     GuildRank, BannerColour, BannerOutline, BannerCrests, HealTypes, Interfaces,
     Effects, Skills, ResourceState, Ranks
 )
-from ..network.shared_types import (
+from network.shared_types import (
     HitData, Hits, SerializedContainer, SlotData, EntityData, EntityDisplayInfo
 )
-from ..network.opcodes import (
+from network.opcodes import (
     Movement as MovementOpcode, Combat as CombatOpcode, Equipment as EquipmentOpcode,
     Container as ContainerOpcode, Ability as AbilityOpcode, Achievement as AchievementOpcode,
     Bubble as BubbleOpcode, Camera as CameraOpcode, Crafting as CraftingOpcode,
@@ -24,58 +24,58 @@ from ..network.opcodes import (
 )
 
 # Imports for all packet implementations
-from ..network.impl.handshake import HandshakePacket, ClientHandshakePacketData
-from ..network.impl.movement import MovementPacket, MovementPacketData
-from ..network.impl.combat import CombatPacket, CombatPacketData
-from ..network.impl.equipment import EquipmentPacket, SerializedEquipment, EquipmentData
-from ..network.impl.container import ContainerPacket, ContainerPacketData
-from ..network.impl.chat import ChatPacket, ChatPacketData
-from ..network.impl.ability import AbilityPacket, AbilityData, SerializedAbility
-from ..network.impl.achievement import AchievementPacket, AchievementData, AchievementPacketData
-from ..network.impl.animation import AnimationPacket, AnimationPacketData
-from ..network.impl.blink import BlinkPacket
-from ..network.impl.bubble import BubblePacket, BubblePacketData
-from ..network.impl.camera import CameraPacket
-from ..network.impl.command import CommandPacket, CommandPacketData
-from ..network.impl.connected import ConnectedPacket
-from ..network.impl.countdown import CountdownPacket, CountdownPacketData
-from ..network.impl.crafting import CraftingPacket, CraftingPacketData, CraftingRequirement, CraftingResult
-from ..network.impl.death import DeathPacket
-from ..network.impl.despawn import DespawnPacket, DespawnPacketData
-from ..network.impl.effect import EffectPacket, EffectPacketData
-from ..network.impl.enchant import EnchantPacket, EnchantPacketData
-from ..network.impl.experience import ExperiencePacket, ExperiencePacketData
-from ..network.impl.friends import FriendsPacket, FriendsPacketData, FriendInfo
-from ..network.impl.guild import GuildPacket, GuildPacketData, Member, Decoration, ListInfo
-from ..network.impl.heal import HealPacket, HealPacketData
-from ..network.impl.interface import InterfacePacket, InterfacePacketData
-from ..network.impl.list import ListPacket, ListPacketData, Position
-from ..network.impl.lootbag import LootBagPacket, LootBagPacketData
-from ..network.impl.map import MapPacket
-from ..network.impl.minigame import MinigamePacket, MinigamePacketData
-from ..network.impl.music import MusicPacket
-from ..network.impl.network import NetworkPacket, NetworkPacketData
-from ..network.impl.notification import NotificationPacket, NotificationPacketData
-from ..network.impl.npc import NPCPacket, NPCPacketData, NPCData
-from ..network.impl.overlay import OverlayPacket, OverlayPacketData, SerializedLight
-from ..network.impl.player import PlayerPacket, PlayerPacketData, PlayerData
-from ..network.impl.pointer import PointerPacket, PointerPacketData
-from ..network.impl.points import PointsPacket, PointsPacketData
-from ..network.impl.poison import PoisonPacket
-from ..network.impl.pvp import PVPPacket, PVPPacketData
-from ..network.impl.quest import QuestPacket, QuestPacketData, QuestData
-from ..network.impl.rank import RankPacket
-from ..network.impl.relay import RelayPacket
-from ..network.impl.resource import ResourcePacket, ResourcePacketData
-from ..network.impl.respawn import RespawnPacket, RespawnPacketData
-from ..network.impl.skill import SkillPacket, SkillPacketData, SkillData, SerializedSkills
-from ..network.impl.spawn import SpawnPacket
-from ..network.impl.store import StorePacket, StorePacketData, SerializedStoreItem
-from ..network.impl.sync import SyncPacket
-from ..network.impl.teleport import TeleportPacket, TeleportPacketData
-from ..network.impl.trade import TradePacket, TradeRequestData, TradeAddData
-from ..network.impl.update import UpdatePacket
-from ..network.impl.welcome import WelcomePacket
+from network.impl.handshake import HandshakePacket, ClientHandshakePacketData
+from network.impl.movement import MovementPacket, MovementPacketData
+from network.impl.combat import CombatPacket, CombatPacketData
+from network.impl.equipment import EquipmentPacket, SerializedEquipment, EquipmentData
+from network.impl.container import ContainerPacket, ContainerPacketData
+from network.impl.chat import ChatPacket, ChatPacketData
+from network.impl.ability import AbilityPacket, AbilityData, SerializedAbility
+from network.impl.achievement import AchievementPacket, AchievementData, AchievementPacketData
+from network.impl.animation import AnimationPacket, AnimationPacketData
+from network.impl.blink import BlinkPacket
+from network.impl.bubble import BubblePacket, BubblePacketData
+from network.impl.camera import CameraPacket
+from network.impl.command import CommandPacket, CommandPacketData
+from network.impl.connected import ConnectedPacket
+from network.impl.countdown import CountdownPacket, CountdownPacketData
+from network.impl.crafting import CraftingPacket, CraftingPacketData, CraftingRequirement, CraftingResult
+from network.impl.death import DeathPacket
+from network.impl.despawn import DespawnPacket, DespawnPacketData
+from network.impl.effect import EffectPacket, EffectPacketData
+from network.impl.enchant import EnchantPacket, EnchantPacketData
+from network.impl.experience import ExperiencePacket, ExperiencePacketData
+from network.impl.friends import FriendsPacket, FriendsPacketData, FriendInfo
+from network.impl.guild import GuildPacket, GuildPacketData, Member, Decoration, ListInfo
+from network.impl.heal import HealPacket, HealPacketData
+from network.impl.interface import InterfacePacket, InterfacePacketData
+from network.impl.list import ListPacket, ListPacketData, Position
+from network.impl.lootbag import LootBagPacket, LootBagPacketData
+from network.impl.map import MapPacket
+from network.impl.minigame import MinigamePacket, MinigamePacketData
+from network.impl.music import MusicPacket
+from network.impl.network import NetworkPacket, NetworkPacketData
+from network.impl.notification import NotificationPacket, NotificationPacketData
+from network.impl.npc import NPCPacket, NPCPacketData, NPCData
+from network.impl.overlay import OverlayPacket, OverlayPacketData, SerializedLight
+from network.impl.player import PlayerPacket, PlayerPacketData, PlayerData
+from network.impl.pointer import PointerPacket, PointerPacketData
+from network.impl.points import PointsPacket, PointsPacketData
+from network.impl.poison import PoisonPacket
+from network.impl.pvp import PVPPacket, PVPPacketData
+from network.impl.quest import QuestPacket, QuestPacketData, QuestData
+from network.impl.rank import RankPacket
+from network.impl.relay import RelayPacket
+from network.impl.resource import ResourcePacket, ResourcePacketData
+from network.impl.respawn import RespawnPacket, RespawnPacketData
+from network.impl.skill import SkillPacket, SkillPacketData, SkillData, SerializedSkills
+from network.impl.spawn import SpawnPacket
+from network.impl.store import StorePacket, StorePacketData, SerializedStoreItem
+from network.impl.sync import SyncPacket
+from network.impl.teleport import TeleportPacket, TeleportPacketData
+from network.impl.trade import TradePacket, TradeRequestData, TradeAddData
+from network.impl.update import UpdatePacket
+from network.impl.welcome import WelcomePacket
 
 def test_handshake_packet():
     data = ClientHandshakePacketData(type='client', instance='player_123', server_id=1)
