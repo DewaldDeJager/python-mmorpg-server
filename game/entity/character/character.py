@@ -1,16 +1,26 @@
 import time
+import random
+import math
 from typing import List, Optional, Callable, Dict, Any, Union
 
 from game.entity.entity import Entity
 from game.info.formulas import Formulas
-from game.world import World
 from game.entity.character.points.hitpoints import HitPoints
 from game.entity.character.effect.poison import Poison
 from game.entity.character.effect.status import Status
 from game.entity.character.combat.hit import Hit
 from network.packet import Packet
-from network.modules import Constants, Defaults, Orientation, Hits, Effects
+from network.modules import Constants, Defaults, Orientation, Hits, Effects, PacketType, PoisonTypes
 from network.shared_types import EntityData, Stats, Bonuses
+from network import opcodes as Opcodes
+
+from game.world import World, PacketData
+from network.impl.movement import MovementPacket, MovementPacketData
+from network.impl.teleport import TeleportPacket, TeleportPacketData
+from network.impl.points import PointsPacket, PointsPacketData
+from network.impl.combat import CombatPacket, CombatPacketData
+from network.impl.effect import EffectPacket, EffectPacketData
+from network.impl.countdown import CountdownPacket, CountdownPacketData
 
 # Type aliases for better readability
 PoisonCallback = Callable[[int, bool], None]
@@ -85,19 +95,49 @@ class Character(Entity):
         Handles a change in the hit points and relays
         that information to the nearby regions.
         """
-        pass
+        self.send_to_regions(
+            PointsPacket(
+                PointsPacketData(
+                    instance=self.instance,
+                    hit_points=self.hit_points.get_hit_points(),
+                    max_hit_points=self.hit_points.get_max_hit_points()
+                )
+            )
+        )
 
     def handle_status_effect_add(self, effect: Effects) -> None:
         """
         Handles the addition of a status effect.
         """
-        pass
+        if self.is_player() and effect == Effects.Freezing:
+            # TODO: Implement sync()
+            # self.sync()
+            pass
+
+        self.send_to_regions(
+            EffectPacket(
+                Opcodes.Effect.Add,
+                EffectPacketData(instance=self.instance, effect=effect)
+            )
+        )
 
     def handle_status_effect_remove(self, effect: Effects) -> None:
         """
         Handles the removal of a status effect.
         """
-        pass
+        if self.is_player() and effect == Effects.Freezing:
+            # TODO: Implement sync() and in_freezing_area()
+            # self.sync()
+            # if self.in_freezing_area():
+            #     return self.status.add(Effects.Freezing)
+            pass
+
+        self.send_to_regions(
+            EffectPacket(
+                Opcodes.Effect.Remove,
+                EffectPacketData(instance=self.instance, effect=effect)
+            )
+        )
 
     def handle_poison(self) -> None:
         """
@@ -127,97 +167,232 @@ class Character(Entity):
         """
         Handles the poison damage.
         """
-        pass
+        # Poison is related to the strength or archery level.
+        is_poisoned = Formulas.get_poison_chance(self.get_skill_damage_level()) < attacker.get_poison_chance()
+
+        # Use venom as default for now.
+        if is_poisoned:
+            self.set_poison(PoisonTypes.Venom)
 
     def handle_bloodsucking(self, attacker: "Character", damage: int) -> None:
         """
         Handles the bloodsucking effect.
         """
-        pass
+        # Blood sucking has a 30% chance of occurring, so we return 70% of the time.
+        if random.randint(0, 100) > 30:
+            return
 
-    def heal(self, amount: int) -> None:
+        # 5% of the damage dealt per level of bloodsucking is healed.
+        heal_amount = math.floor(damage * (0.05 * attacker.get_bloodsucking_level()))
+
+        # Prevent healing if the amount is less than 1.
+        if heal_amount < 1:
+            return
+
+        if attacker.is_player():
+            # TODO: Implement heal() with type
+            # attacker.heal(heal_amount, 'hitpoints')
+            attacker.heal(heal_amount)
+        else:
+            attacker.heal(heal_amount)
+
+    def heal(self, amount: int = 1) -> None:
         """
         Heals the character.
         """
-        pass
+        # Cannot heal if dead or poisoned.
+        if self.is_dead() or self.poison:
+            return
+
+        # TODO: Implement combat started check
+        # if self.combat.started:
+        #     return
+
+        # Cannot heal if character is being attacked.
+        if self.get_attacker_count() > 0:
+            return
+
+        # Stops the character from healing if they are at max hitpoints.
+        if self.hit_points.is_full():
+            return
+
+        # Certain status effects prevent the character from healing.
+        if (self.status.has(Effects.Freezing) or
+                self.status.has(Effects.Burning) or
+                self.status.has(Effects.Terror)):
+            return
+
+        self.hit_points.increment(amount)
 
     def effects(self) -> None:
         """
         Handles the effects.
         """
-        pass
+        # TODO: Confirm whether this needs to take in a list of effects
+        def effect_callback(effect: Effects):
+            if effect == Effects.Freezing:
+                self.handle_cold_damage()
+            elif effect == Effects.Burning:
+                self.handle_burning_damage()
+
+        self.status.for_each_effect(effect_callback)
 
     def find_adjacent_tile(self) -> Dict[str, int]:
         """
         Finds an adjacent tile.
         """
+        # TODO: Implement world.map references
+        # if not self.world.map.is_colliding(self.x + 1, self.y):
+        #     self.set_position(self.x + 1, self.y)
+        # ...
         return {"x": -1, "y": -1}
 
     def stop(self) -> None:
         """
         Stops the character.
         """
+        # TODO: Implement interval fields logic
         pass
 
     def hit(self, damage: int, attacker: Optional["Character"] = None, aoe: int = 0, is_thorns: bool = False) -> None:
         """
         Handles the hit.
         """
-        pass
+        # Stop hitting if entity is dead.
+        if self.is_dead() or self.status.has(Effects.Invincible):
+            return
+
+        # Add an entry to the damage table.
+        if attacker and attacker.is_player():
+            self.add_to_damage_table(attacker, damage)
+
+        # Decrement health by the damage amount.
+        self.hit_points.decrement(damage)
+
+        # If this is an AoE attack, we will damage all nearby characters.
+        if aoe:
+            self.handle_aoe(damage, attacker, aoe)
+
+        # Hit callback on each hit.
+        if self.hit_callback:
+            self.hit_callback(damage, attacker, is_thorns)
+
+        # If the character has bloodsucking, we let the handler take care of it.
+        if attacker and attacker.has_bloodsucking():
+            self.handle_bloodsucking(attacker, damage)
+
+        # Call the death callback if the character reaches 0 hitpoints.
+        if self.is_dead():
+            # Clear the status effects.
+            self.status.clear()
+
+            if self.death_callback:
+                self.death_callback(attacker)
+            return
+
+        # Poison only occurs when we land a hit and attacker has a poisonous weapon.
+        if attacker and attacker.is_poisonous() and damage > 0:
+            self.handle_poison_damage(attacker)
 
     def follow(self, target: Optional["Character"] = None) -> None:
         """
         Follows the target.
         """
-        pass
+        # If the character is stunned, we stop.
+        if self.is_stunned():
+            return
+
+        # If no target is specified and we don't have a target, we stop.
+        if not target and not self.has_target():
+            return
+
+        target_instance = target.instance if target else self.target.instance
+        self.send_to_regions(
+            MovementPacket(
+                Opcodes.Movement.Follow,
+                MovementPacketData(
+                    instance=self.instance,
+                    target=target_instance
+                )
+            )
+        )
 
     def teleport(self, x: int, y: int, with_animation: bool = False) -> None:
         """
         Teleports the character.
         """
-        pass
+        self.set_position(x, y, True)
+
+        self.send_to_regions(
+            TeleportPacket(
+                TeleportPacketData(
+                    instance=self.instance,
+                    x=x,
+                    y=y,
+                    with_animation=with_animation
+                )
+            )
+        )
+
+        # TODO: Implement setTimeout for untoggling teleporting flag
+        # For now, just set it to False or leave it as True if we want to mimic the delay later.
+        # In Python we might use asyncio.sleep if this was an async method.
+        # Since it's not, we might need a different approach or just leave it for now.
+        # setTimeout(() => (this.teleporting = false), 500);
 
     def countdown(self, time_val: int) -> None:
         """
         Handles the countdown.
         """
-        pass
+        self.send_to_regions(
+            CountdownPacket(
+                CountdownPacketData(
+                    instance=self.instance,
+                    time=time_val
+                )
+            )
+        )
 
     def stop_movement(self) -> None:
         """
         Stops the character's movement.
         """
-        pass
+        self.send_to_regions(
+            MovementPacket(
+                Opcodes.Movement.Stop,
+                MovementPacketData(instance=self.instance)
+            )
+        )
 
     def clear_target(self) -> None:
         """
         Clears the target.
         """
-        pass
+        self.target = None
 
     def clear_attackers(self) -> None:
         """
         Clears the attackers.
         """
-        pass
+        self.attackers = []
 
     def remove_attacker(self, attacker: "Character") -> None:
         """
         Removes an attacker.
         """
-        pass
+        self.attackers = [a for a in self.attackers if a.instance != attacker.instance]
 
     def get_attacker_count(self) -> int:
         """
         Gets the attacker count.
         """
-        return 0
+        return len(self.attackers)
 
     def get_attack_rate(self) -> int:
         """
         Gets the attack rate.
         """
-        return 0
+        return self.attack_rate
 
     def get_attack_stats(self) -> Stats:
         """
@@ -241,49 +416,49 @@ class Character(Entity):
         """
         Gets the accuracy bonus.
         """
-        return 0
+        return self.get_bonuses().accuracy
 
     def get_accuracy_level(self) -> int:
         """
         Gets the accuracy level.
         """
-        return 0
+        return 1
 
     def get_strength_level(self) -> int:
         """
         Gets the strength level.
         """
-        return 0
+        return 1
 
     def get_archery_level(self) -> int:
         """
         Gets the archery level.
         """
-        return 0
+        return 1
 
     def get_defense_level(self) -> int:
         """
         Gets the defense level.
         """
-        return 0
+        return 1
 
     def get_damage_bonus(self) -> int:
         """
         Gets the damage bonus.
         """
-        return 0
+        return self.get_bonuses().archery if self.is_ranged() else self.get_bonuses().strength
 
     def get_skill_damage_level(self) -> int:
         """
         Gets the skill damage level.
         """
-        return 0
+        return self.get_archery_level() if self.is_ranged() else self.get_strength_level()
 
     def get_damage_reduction(self) -> int:
         """
         Gets the damage reduction.
         """
-        return 0
+        return 1
 
     def get_attack_style(self) -> Hits:
         """
@@ -295,47 +470,55 @@ class Character(Entity):
         """
         Gets the damage type.
         """
-        return Hits.Normal
+        return self.damage_type
 
     def get_poison_chance(self) -> int:
         """
         Gets the poison chance.
         """
-        return 0
+        return Defaults.POISON_CHANCE
 
     def get_random_attacker(self) -> Optional["Character"]:
         """
         Gets a random attacker.
         """
-        return None
+        if not self.attackers:
+            return None
+        # TODO: There should be a function in the random package to return a random element from a list already
+        return self.attackers[random.randint(0, len(self.attackers) - 1)]
 
     def get_aoe(self) -> int:
         """
         Gets the aoe.
         """
-        return 0
+        aoe_val = self.aoe
+        if self.aoe:
+            self.aoe = 0
+        return aoe_val
 
     def get_projectile_name(self) -> str:
         """
         Gets the projectile name.
         """
-        return ""
+        return self.projectile_name
 
     def get_last_attack(self) -> int:
         """
-        Gets the last attack.
+        Returns the time differential for when the last attack was made.
         """
+        # TODO: Implement combat.last_attack reference
+        # return int(time.time() * 1000) - self.combat.last_attack
         return 0
 
     def get_bloodsucking_level(self) -> int:
         """
-        Gets the bloodsucking level.
+        Default implementation for bloodsucking level, defaults to 1 for all characters.
         """
-        return 0
+        return 1
 
     def has_special_attack(self) -> bool:
         """
-        Checks if the character has a special attack.
+        Default implementation for checking if the character has a special attack.
         """
         return False
 
@@ -343,23 +526,23 @@ class Character(Entity):
         """
         Checks if the character has a target.
         """
-        return False
+        return self.target is not None
 
     def has_attacker(self, attacker: "Character") -> bool:
         """
         Checks if the character has an attacker.
         """
-        return False
+        return any(a.instance == attacker.instance for a in self.attackers)
 
     def has_arrows(self) -> bool:
         """
-        Checks if the character has arrows.
+        Default implementation for checking if the character has arrows.
         """
-        return False
+        return True
 
     def has_bloodsucking(self) -> bool:
         """
-        Checks if the character has bloodsucking.
+        Default implementation for checking if the character has the bloodsucking ability.
         """
         return False
 
@@ -367,23 +550,29 @@ class Character(Entity):
         """
         Checks if the character is in combat.
         """
-        return False
+        # TODO: Implement combat started and expired check
+        # return (self.combat.started or
+        #         len(self.attackers) > 0 or
+        #         self.has_target() or
+        #         not self.combat.expired())
+        return len(self.attackers) > 0 or self.has_target()
 
     def is_ranged(self) -> bool:
         """
-        Checks if the character is ranged.
+        `is_ranged` is a general function that checks if the character is using
+        any form of ranged attack. This can be either a bow or magic spells.
         """
-        return False
+        return self.attack_range > 1
 
     def is_archer(self) -> bool:
         """
         Checks if the character is an archer.
         """
-        return False
+        return self.is_ranged() and not self.is_magic()
 
     def is_magic(self) -> bool:
         """
-        Checks if the character is magic.
+        Default implementation for checking if the character is magic.
         """
         return False
 
@@ -391,17 +580,24 @@ class Character(Entity):
         """
         Checks if the character is dead.
         """
-        return False
+        return self.hit_points.is_empty() or self.dead
 
     def is_near_target(self) -> bool:
         """
-        Checks if the character is near the target.
+        Checks if the character is within its own attack range next to its target.
         """
-        return False
+        if not self.target:
+            return False
+
+        if self.is_ranged():
+            return (self.get_distance(self.target) <= self.attack_range and
+                    self.plateau_level >= self.target.plateau_level)
+
+        return self.is_adjacent(self.target)
 
     def is_poisonous(self) -> bool:
         """
-        Checks if the character is poisonous.
+        Default implementation to check if the character is poisonous.
         """
         return False
 
@@ -409,11 +605,17 @@ class Character(Entity):
         """
         Checks if the character is on the same tile.
         """
-        return False
+        if not self.target:
+            return False
+        return self.x == self.target.x and self.y == self.target.y
 
     def is_stunned(self) -> bool:
         """
-        Checks if the character is stunned.
+        Indicates whether or not the character is able to move.
+        """
+        return self.status.has(Effects.Stun)
+
+    def can_attack(self, target: "Character") -> bool:
         """
         return False
 
@@ -427,31 +629,60 @@ class Character(Entity):
         """
         Sets the character's position.
         """
+        if self.teleporting:
+            return
+
         super().set_position(x, y)
+
+        # TODO: Implement world.map references
+        # self.world.map.grids.update_entity(self)
+
+        if with_teleport:
+            self.teleporting = True
 
     def set_target(self, target: "Character") -> None:
         """
-        Sets the character's target.
+        Sets the new target.
         """
-        pass
+        self.target = target
 
     def add_attacker(self, attacker: "Character") -> None:
         """
-        Adds an attacker.
+        Adds an attacker to our list of attackers.
         """
-        pass
+        if attacker.instance == self.instance or self.has_attacker(attacker):
+            return
+        self.attackers.append(attacker)
 
     def add_to_damage_table(self, attacker: "Character", damage: int) -> None:
         """
-        Adds to the damage table.
+        Adds or creates an entry in the damage table for the attacker.
         """
-        pass
+        if damage >= self.hit_points.get_hit_points():
+            damage = self.hit_points.get_hit_points()
+
+        if attacker.instance not in self.damage_table:
+            self.damage_table[attacker.instance] = damage
+        else:
+            self.damage_table[attacker.instance] += damage
 
     def add_status_effect(self, hit: Hit) -> None:
         """
         Adds a status effect.
         """
-        pass
+        if self.is_dead() or hit.type == Hits.Normal:
+            return
+
+        if hit.type == Hits.Stun:
+            self.status.add_with_timeout(Effects.Stun, Constants.STUN_DURATION)
+        elif hit.type == Hits.Terror:
+            self.status.add_with_timeout(Effects.Terror, Constants.TERROR_DURATION)
+        elif hit.type == Hits.Freezing:
+            if not self.status.has(Effects.SnowPotion):
+                self.status.add_with_timeout(Effects.Freezing, Constants.FREEZING_DURATION)
+        elif hit.type == Hits.Burning:
+            if not self.status.has(Effects.FirePotion):
+                self.status.add_with_timeout(Effects.Burning, Constants.BURNING_DURATION)
 
     def find_nearest_target(self) -> Optional["Character"]:
         """
@@ -463,7 +694,7 @@ class Character(Entity):
         """
         Sets the hit points.
         """
-        pass
+        self.hit_points.set_hit_points(hit_points)
 
     # TODO: Consider using better types for the arguments, like the PoisonTypes enum for type_val
     def set_poison(self, type_val: int = -1, start: Optional[int] = None) -> None:
@@ -476,37 +707,49 @@ class Character(Entity):
         """
         Sets the orientation.
         """
-        pass
+        self.orientation = orientation
 
     def send_to_region(self, packet: Packet, ignore: bool = False) -> None:
         """
-        Sends a packet to the region.
+        Sends a packet to the current region.
         """
-        pass
+        self.world.push(PacketType.Region, PacketData(
+            region=self.region,
+            packet=packet,
+            ignore=self.instance if ignore else ''
+        ))
 
     def send_to_regions(self, packet: Packet, ignore: bool = False) -> None:
         """
-        Sends a packet to the regions.
+        Sends a packet to all regions surrounding the player.
         """
-        pass
+        self.world.push(PacketType.Regions, PacketData(
+            region=self.region,
+            packet=packet,
+            ignore=self.instance if ignore else ''
+        ))
 
     def send_broadcast(self, packet: Packet) -> None:
         """
-        Sends a broadcast packet.
+        Broadcasts a message to all the players in the world.
         """
-        pass
+        self.world.push(PacketType.Broadcast, PacketData(
+            packet=packet
+        ))
 
     def for_each_nearby_character(self, callback: Callable[["Character"], None], range_val: int = 1) -> None:
         """
         Iterates through each nearby character.
         """
+        # TODO: Implement world.get_grids() reference
         pass
 
     def for_each_attacker(self, callback: Callable[["Character"], None]) -> None:
         """
         Iterates through each attacker.
         """
-        pass
+        for attacker in self.attackers:
+            callback(attacker)
 
     def serialize(self) -> EntityData:
         """
@@ -518,22 +761,22 @@ class Character(Entity):
         """
         Callback for when the character is poisoned.
         """
-        pass
+        self.poison_callback = callback
 
     def on_hit(self, callback: HitCallback) -> None:
         """
         Callback for when the character is hit.
         """
-        pass
+        self.hit_callback = callback
 
     def on_death(self, callback: DeathCallback) -> None:
         """
         Callback for when the character dies.
         """
-        pass
+        self.death_callback = callback
 
     def on_death_impl(self, callback: DeathCallback) -> None:
         """
         Implementation for the death callback.
         """
-        pass
+        self.death_i_callback = callback
