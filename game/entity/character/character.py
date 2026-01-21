@@ -1,8 +1,10 @@
 import time
 import random
 import math
-from typing import List, Optional, Callable, Dict, Any, Union
+from datetime import datetime
+from typing import List, Optional, Callable, Dict, override
 
+from common.utils import Utils
 from game.entity.entity import Entity
 from game.info.formulas import Formulas
 from game.entity.character.points.hitpoints import HitPoints
@@ -12,7 +14,7 @@ from game.entity.character.combat.hit import Hit
 from network.packet import Packet
 from network.modules import Constants, Defaults, Orientation, Hits, Effects, PacketType, PoisonTypes
 from network.shared_types import EntityData, Stats, Bonuses
-from network import opcodes as Opcodes
+from network import opcodes as Opcodes, AttackStyle
 
 from game.world import World, PacketData
 from network.impl.movement import MovementPacket, MovementPacketData
@@ -23,7 +25,7 @@ from network.impl.effect import EffectPacket, EffectPacketData
 from network.impl.countdown import CountdownPacket, CountdownPacketData
 
 # Type aliases for better readability
-PoisonCallback = Callable[[int, bool], None]
+PoisonCallback = Callable[[Optional[PoisonTypes], bool], None]
 HitCallback = Callable[[int, Optional["Character"], bool], None]
 DeathCallback = Callable[[Optional["Character"]], None]
 
@@ -398,19 +400,19 @@ class Character(Entity):
         """
         Gets the attack stats.
         """
-        return Stats()
+        return Utils.get_empty_stats()
 
     def get_defense_stats(self) -> Stats:
         """
         Gets the defense stats.
         """
-        return Stats()
+        return Utils.get_empty_stats()
 
     def get_bonuses(self) -> Bonuses:
         """
         Gets the bonuses.
         """
-        return Bonuses()
+        return Utils.get_empty_bonuses()
 
     def get_accuracy_bonus(self) -> int:
         """
@@ -460,11 +462,11 @@ class Character(Entity):
         """
         return 1
 
-    def get_attack_style(self) -> Hits:
+    def get_attack_style(self) -> AttackStyle:
         """
         Gets the attack style.
         """
-        return Hits.Normal
+        return AttackStyle.None_
 
     def get_damage_type(self) -> Hits:
         """
@@ -489,7 +491,11 @@ class Character(Entity):
 
     def get_aoe(self) -> int:
         """
-        Gets the aoe.
+        AoE damage works on a toggle basis. When a character uses an AoE attack
+        it automatically resets the ability to use AoE attacks until it is toggled
+        again. Toggling refers to the AoE radius value being set to anything greater
+        than 0.
+        :returns: The current AoE radius value.
         """
         aoe_val = self.aoe
         if self.aoe:
@@ -603,7 +609,7 @@ class Character(Entity):
 
     def is_on_same_tile(self) -> bool:
         """
-        Checks if the character is on the same tile.
+        Checks if the character's target is on the same tile as the character.
         """
         if not self.target:
             return False
@@ -617,17 +623,37 @@ class Character(Entity):
 
     def can_attack(self, target: "Character") -> bool:
         """
-        return False
-
-    def can_attack(self, target: "Character") -> bool:
-        """
         Checks if the character can attack the target.
         """
-        return False
+        if target.is_pet():
+            # TODO: Implement notify()
+            # if self.is_player():
+            #     self.notify('misc:CANNOT_ATTACK_PET')
+            return False
 
+        if target.is_mob():
+            # TODO: Implement Player/Quests/Tutorial specific logic
+            # if self.is_player() and not self.quests.can_attack_in_tutorial():
+            #     self.notify('misc:CANNOT_ATTACK_MOB')
+            #     return False
+            return True
+
+        if not self.is_player() or not target.is_player():
+            return False
+
+        # TODO: Implement more player specific checks (Cheater, Minigame, PvP Area, Level Difference)
+        return True
+
+    @override
     def set_position(self, x: int, y: int, with_teleport: bool = False) -> None:
         """
-        Sets the character's position.
+        Override of the superclass `set_position`. Since characters are the only
+        instances capable of movement, we need to update their position in the grids.
+        We also add a teleport flag that we can use to prevent the character from
+        performing actions during the teleportation process.
+        :param x: The new x grid position.
+        :param y: The new y grid position.
+        :param with_teleport: Whether the character is teleporting or not.
         """
         if self.teleporting:
             return
@@ -668,7 +694,7 @@ class Character(Entity):
 
     def add_status_effect(self, hit: Hit) -> None:
         """
-        Adds a status effect.
+        Adds a status effect to the character based on the hit type.
         """
         if self.is_dead() or hit.type == Hits.Normal:
             return
@@ -686,9 +712,21 @@ class Character(Entity):
 
     def find_nearest_target(self) -> Optional["Character"]:
         """
-        Finds the nearest target.
+        Finds the nearest character to target within the list of attackers.
         """
-        return None
+        if not self.attackers:
+            return None
+
+        nearest = self.attackers[0]
+        min_dist = self.get_distance(nearest)
+
+        for i in range(1, len(self.attackers)):
+            dist = self.get_distance(self.attackers[i])
+            if dist < min_dist:
+                min_dist = dist
+                nearest = self.attackers[i]
+
+        return nearest
 
     def set_hit_points(self, hit_points: int) -> None:
         """
@@ -696,12 +734,30 @@ class Character(Entity):
         """
         self.hit_points.set_hit_points(hit_points)
 
-    # TODO: Consider using better types for the arguments, like the PoisonTypes enum for type_val
-    def set_poison(self, type_val: int = -1, start: Optional[int] = None) -> None:
+    def set_poison(self, type_val: Optional[PoisonTypes] = None, start: Optional[datetime] = None) -> None:
         """
-        Sets the poison effect.
+        Sets the poison status and makes a callback. If
+        no type is specified, we remove the poison.
+        :param type_val: The type of poison we are adding.
+        :param start: Optional parameter for setting when poison starts (for loading from database).
         """
-        pass
+        remove = type_val is None
+
+        if remove and not self.poison:
+            return
+
+        exists = type_val is not None and self.poison is not None
+
+        self.poison = None if remove else Poison(PoisonTypes(type_val), start)
+
+        # TODO: Implement interval fields logic for poison
+        # if remove:
+        #     self.stop_poison_interval()
+        # elif not exists:
+        #     self.start_poison_interval()
+
+        if self.poison_callback:
+            self.poison_callback(type_val, not exists)
 
     def set_orientation(self, orientation: Orientation) -> None:
         """
@@ -751,11 +807,15 @@ class Character(Entity):
         for attacker in self.attackers:
             callback(attacker)
 
+    @override
     def serialize(self) -> EntityData:
         """
         Serializes the character.
         """
-        return super().serialize()
+        data = super().serialize()
+        data.movement_speed = self.movement_speed
+        data.orientation = self.orientation
+        return data
 
     def on_poison(self, callback: PoisonCallback) -> None:
         """
