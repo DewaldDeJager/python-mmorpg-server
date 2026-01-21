@@ -145,25 +145,112 @@ class Character(Entity):
         """
         Handles the poison effect.
         """
-        pass
+        if not self.poison:
+            return None
 
-    def handle_aoe(self, damage: int, attacker: "Character", range_val: int) -> None:
+        # Remove the poison if it has expired.
+        if self.poison.expired():
+            return self.set_poison()
+
+        # Create a hit object for poison damage and serialize it.
+        hit_data = Hit(Hits.Poison, self.poison.damage).serialize()
+
+        # Send a hit packet to display the info to the client.
+        self.send_to_regions(
+            CombatPacket(
+                Opcodes.Combat.Hit,
+                CombatPacketData(
+                    instance=self.instance,
+                    target=self.instance,
+                    hit=hit_data
+                )
+            )
+        )
+
+        # Do the actual damage to the character.
+        self.hit(self.poison.damage)
+
+    def handle_aoe(self, damage: int, attacker: Optional["Character"] = None, range_val: int = 1) -> None:
         """
         Handles the area of effect damage.
         """
-        pass
+        def aoe_callback(character: "Character"):
+            distance = self.get_distance(character) + 1
+            hit_data = Hit(
+                Hits.Normal,
+                math.floor(damage / distance),
+                False,
+                distance
+            ).serialize()
+
+            # Create a hit packet and send it to the nearby regions.
+            self.send_to_regions(
+                CombatPacket(
+                    Opcodes.Combat.Hit,
+                    CombatPacketData(
+                        instance=attacker.instance if attacker else '',
+                        target=character.instance,
+                        hit=hit_data
+                    )
+                )
+            )
+
+            # Apply the damage to the character.
+            character.hit(hit_data['damage'], attacker)
+
+        self.for_each_nearby_character(aoe_callback, range_val)
 
     def handle_cold_damage(self) -> None:
         """
         Handles the cold damage.
         """
-        pass
+        # Only players that do not have the snow potion can be affected.
+        if self.status.has(Effects.SnowPotion):
+            return
+
+        # Create a hit object for cold damage and serialize it.
+        hit_data = Hit(Hits.Freezing, Constants.COLD_EFFECT_DAMAGE).serialize()
+
+        # Send a hit packet to display the info to the client.
+        self.send_to_regions(
+            CombatPacket(
+                Opcodes.Combat.Hit,
+                CombatPacketData(
+                    instance=self.instance,
+                    target=self.instance,
+                    hit=hit_data
+                )
+            )
+        )
+
+        # Do the actual damage to the character.
+        self.hit(Constants.COLD_EFFECT_DAMAGE)
 
     def handle_burning_damage(self) -> None:
         """
         Handles the burning damage.
         """
-        pass
+        # Only players that do not have the fire potion can be affected.
+        if self.status.has(Effects.FirePotion):
+            return
+
+        # Create a hit object for burning damage and serialize it.
+        hit_data = Hit(Hits.Burning, Constants.BURNING_EFFECT_DAMAGE).serialize()
+
+        # Send a hit packet to display the info to the client.
+        self.send_to_regions(
+            CombatPacket(
+                Opcodes.Combat.Hit,
+                CombatPacketData(
+                    instance=self.instance,
+                    target=self.instance,
+                    hit=hit_data
+                )
+            )
+        )
+
+        # Do the actual damage to the character.
+        self.hit(Constants.BURNING_EFFECT_DAMAGE)
 
     def handle_poison_damage(self, attacker: "Character") -> None:
         """
