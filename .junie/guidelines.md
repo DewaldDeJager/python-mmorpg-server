@@ -13,6 +13,7 @@ TypeScript.
     - **Motor**: Used as the asynchronous MongoDB driver.
 2. **Pure Python**: The goal is to leverage Python's strengths and keep the codebase "Pythonic".
     - Use **type hints** (PEP 484) throughout the codebase to ensure type safety and better IDE support.
+      - Use the @override decorator to ensure that overridden methods are properly annotated.
     - Follow **PEP 8** for code style and formatting.
     - Use **type aliases** for complex types, such as callbacks, to improve readability (e.g., `MovementCallback = Callable[[int, int], None]`).
     - Prefer **Python datetime types** (`datetime`, `timedelta`) where time calculations or similar logic are used, ensuring idiomatic time handling.

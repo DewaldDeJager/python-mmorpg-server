@@ -302,6 +302,7 @@ class Entity(ABC):
         """
         return self.is_tree() or self.is_rock() or self.is_fish_spot() or self.is_foraging()
 
+    @abstractmethod
     def serialize(self) -> EntityData:
         """
         This is entity superclass serialization. It provides

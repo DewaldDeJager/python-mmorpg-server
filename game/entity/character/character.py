@@ -1,6 +1,7 @@
 import time
 import random
 import math
+from abc import abstractmethod
 from datetime import datetime
 from typing import List, Optional, Callable, Dict, override
 
@@ -895,6 +896,7 @@ class Character(Entity):
             callback(attacker)
 
     @override
+    @abstractmethod
     def serialize(self) -> EntityData:
         """
         Serializes the character.
