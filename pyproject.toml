@@ -14,8 +14,17 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "mypy>=1.19.1",
     "pytest>=7.0.0",
 ]
 
 [tool.uv]
 package = false
+
+[tool.mypy]
+python_version = "3.14"
+strict = false
+check_untyped_defs = true
+ignore_missing_imports = true
+warn_unused_configs = true
+exclude = ["Kaetram-Open"]

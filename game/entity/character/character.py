@@ -175,14 +175,15 @@ class Character(Entity):
         """
         Handles the area of effect damage.
         """
-        def aoe_callback(character: "Character"):
+        def aoe_callback(character: "Character") -> None:
             distance = self.get_distance(character) + 1
-            hit_data = Hit(
+            hit = Hit(
                 Hits.Normal,
                 math.floor(damage / distance),
                 False,
                 distance
-            ).serialize()
+            )
+            hit_data = hit.serialize()
 
             # Create a hit packet and send it to the nearby regions.
             self.send_to_regions(
@@ -197,7 +198,7 @@ class Character(Entity):
             )
 
             # Apply the damage to the character.
-            character.hit(hit_data['damage'], attacker)
+            character.hit(hit.damage, attacker)
 
         self.for_each_nearby_character(aoe_callback, range_val)
 

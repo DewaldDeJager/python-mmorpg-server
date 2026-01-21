@@ -1,5 +1,6 @@
 import asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
+from typing import Optional, Callable, Any
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from common.log import log
 from database.mongodb_loader import Loader
 from database.mongodb_creator import Creator
@@ -29,20 +30,20 @@ class MongoDB:
         self.database_name = database_name
         self.tls = tls
         
-        self.database = None
-        self.loader = None
-        self.creator = None
+        self.database: Optional[AsyncIOMotorDatabase] = None
+        self.loader: Optional[Loader] = None
+        self.creator: Optional[Creator] = None
         
-        self.ready_callback = None
-        self.fail_callback = None
+        self.ready_callback: Optional[Callable[[], Any]] = None
+        self.fail_callback: Optional[Callable[[Exception], Any]] = None
 
-    async def create_connection(self):
+    async def create_connection(self) -> None:
         """
         Attempts to connect to MongoDB. Times out after 5 seconds if
         no MongoDB server is present for the given host.
         """
         try:
-            client = AsyncIOMotorClient(
+            client: AsyncIOMotorClient = AsyncIOMotorClient(
                 self.connection_url,
                 connectTimeoutMS=5000,
                 serverSelectionTimeoutMS=5000,
@@ -66,7 +67,7 @@ class MongoDB:
                     self.ready_callback()
                     
         except Exception as e:
-            self.loader = Loader()
+            self.loader = Loader(None)
             
             if self.fail_callback:
                 if asyncio.iscoroutinefunction(self.fail_callback):

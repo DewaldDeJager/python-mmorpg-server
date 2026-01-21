@@ -58,7 +58,8 @@ class Main:
         log.info("Attempting to reconnect in 10 seconds...")
 
         await asyncio.sleep(10)
-        await self.database.create_connection()
+        if self.database:
+            await self.database.create_connection()
 
     def handle_licensing(self) -> bool:
         if not config.accept_license:

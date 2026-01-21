@@ -25,6 +25,18 @@ For more detailed information about specific subsystems, refer to the following 
 - [**ENTITY.md**](ENTITY.md): Documentation of the entity system, hierarchy, and interactions between game entities.
 - [**ROADMAP.md**](ROADMAP.md): Project goals, completed tasks, and planned features.
 
+## Development
+
+### Type Checking
+
+We use `mypy` for static type checking. To run the type checker:
+
+```bash
+uv run mypy .
+```
+
+Configuration can be found in `pyproject.toml`.
+
 ## Decision Log
 
 | Decision                                 | Date       | Rationale                                                                                                                                                                                                                                            | Alternatives / Drawbacks                                                                                                                                                                                                                                     |
@@ -33,3 +45,4 @@ For more detailed information about specific subsystems, refer to the following 
 | **Networking: FastAPI**                  | 2026-01-15 | Chosen for its high performance (Starlette-based), built-in WebSocket support, and excellent integration with Pydantic for data validation.                                                                                                          | **Alternative:** `websockets` library (too low level), `Django` (too heavy).                                                                                                                                                                                 |
 | **Database Layer: Raw Motor + Pydantic** | 2026-01-16 | Chosen to strictly adhere to the "minimize dependencies" principle and maintain architectural parity with the TypeScript server (which uses the native MongoDB driver). It offers the best performance and explicit control over data serialization. | **Alternative:** Beanie (ODM).<br>**Drawbacks:** Beanie adds an extra dependency layer and abstraction overhead. While it offers a better developer experience with less boilerplate, it diverges from the TS implementation and adds weight to the project. |
 | **Dependency Injection: Explicit Instantiation** | 2026-01-19 | Core game logic and engine services (Main, NetworkManager, SocketHandler) are explicitly instantiated to maintain total control over state, performance, and initialization order. This avoids the mismatch between request-based lifecycles and the persistent nature of a game server. | **Alternative:** FastAPI `Depends()`. <br>**Drawbacks:** `Depends()` adds overhead, complicates state management for singletons, and creates tight coupling with FastAPI. It also doesn't work outside of routes (e.g., in background tasks or game loops). |
+| **Static Type Checking: Mypy**           | 2026-01-21 | Added to improve code reliability, catch common errors early, and serve as live documentation of the codebase's types.                                                                                                                              | **Alternative:** Pyright. <br>**Drawbacks:** Initial setup requires resolving various type inconsistencies and adding annotations.                                                                                                                           |

@@ -379,7 +379,7 @@ def test_quest_packet():
         sub_stage=0,
         completed_sub_stages=["sub1"]
     )
-    data = QuestPacketData(quests=[quest_data])
+    data = QuestPacketData(quests=[quest_data], interface=QuestOpcode.Batch)
     packet = QuestPacket(opcode=QuestOpcode.Batch, data=data)
 
     expected = [
@@ -391,7 +391,8 @@ def test_quest_packet():
                 'stage': 1,
                 'subStage': 0,
                 'completedSubStages': ['sub1']
-            }]
+            }],
+            'interface': QuestOpcode.Batch.value
         }
     ]
     assert packet.serialize() == expected

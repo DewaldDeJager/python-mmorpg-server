@@ -4,6 +4,7 @@ import logging
 import sys
 from datetime import datetime
 from logging import Handler, LogRecord
+from typing import Dict, TextIO, Any, Optional
 from common.config import config
 
 # Custom log levels
@@ -20,7 +21,7 @@ class GameLogHandler(Handler):
     def __init__(self, log_folder: str):
         super().__init__()
         self.log_folder = log_folder
-        self.streams = {}
+        self.streams: Dict[str, TextIO] = {}
 
         if not os.path.exists(self.log_folder):
             os.makedirs(self.log_folder)
@@ -131,7 +132,7 @@ class Log:
         self.game_handler.setFormatter(LogFormatter(use_color=False))
         self.logger.addHandler(self.game_handler)
 
-    def _log(self, level, data, game_category=None, extra_handler=None):
+    def _log(self, level: int, data: Any, game_category: Optional[str] = None, extra_handler: Optional[Handler] = None) -> None:
         extra = {}
         if game_category:
             extra["game_category"] = game_category
@@ -143,7 +144,7 @@ class Log:
             # Manually trigger extra handlers if they aren't attached to the main logger
             # or have special logic. In our case, bug() and log() are specific.
             record = self.logger.makeRecord(
-                self.logger.name, level, "(unknown)", 0, data, None, None, None, extra
+                self.logger.name, level, "(unknown)", 0, data, (), None, None, extra
             )
             extra_handler.emit(record)
 
