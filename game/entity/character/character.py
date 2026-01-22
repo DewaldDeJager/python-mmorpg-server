@@ -1,9 +1,10 @@
 import time
 import random
 import math
+import asyncio
 from abc import abstractmethod
 from datetime import datetime
-from typing import List, Optional, Callable, Dict, override
+from typing import List, Optional, Callable, Dict, override, Any
 
 from common.utils import Utils
 from game.entity.entity import Entity
@@ -77,8 +78,9 @@ class Character(Entity):
         self.last_movement = int(time.time() * 1000)
         self.last_region_change = -1
 
-        # Intervals are excluded as per instructions
-        # TODO: Add the intervals
+        self.healing_task: Optional[asyncio.Task] = None
+        self.effect_task: Optional[asyncio.Task] = None
+        self.poison_task: Optional[asyncio.Task] = None
 
         self.poison_callback: Optional[PoisonCallback] = None
         self.hit_callback: Optional[HitCallback] = None
@@ -91,7 +93,54 @@ class Character(Entity):
         self.status.on_add(self.handle_status_effect_add)
         self.status.on_remove(self.handle_status_effect_remove)
 
-        # setIntervals for healing and effects are excluded
+        self.start_intervals()
+
+    def start_intervals(self) -> None:
+        """
+        Starts the periodic intervals for the character.
+        """
+        self.healing_task = asyncio.create_task(self._interval_loop(self.heal, self.heal_rate / 1000.0))
+        self.effect_task = asyncio.create_task(self._interval_loop(self.effects, Constants.EFFECT_RATE / 1000.0))
+
+    def stop_intervals(self) -> None:
+        """
+        Stops all active interval tasks.
+        """
+        if self.healing_task:
+            self.healing_task.cancel()
+            self.healing_task = None
+
+        if self.effect_task:
+            self.effect_task.cancel()
+            self.effect_task = None
+
+        self.stop_poison_interval()
+
+    def start_poison_interval(self) -> None:
+        """
+        Starts the poison interval task.
+        """
+        if self.poison:
+            self.poison_task = asyncio.create_task(self._interval_loop(self.handle_poison, self.poison.rate.total_seconds()))
+
+    def stop_poison_interval(self) -> None:
+        """
+        Stops the poison interval task.
+        """
+        if self.poison_task:
+            self.poison_task.cancel()
+            self.poison_task = None
+
+    async def _interval_loop(self, callback: Callable[[], Any], interval: float) -> None:
+        """
+        A helper method to run a callback periodically.
+        """
+        try:
+            while True:
+                await asyncio.sleep(interval)
+                callback()
+        except asyncio.CancelledError:
+            pass
 
     def handle_hit_points(self) -> None:
         """
@@ -319,7 +368,7 @@ class Character(Entity):
         """
         Handles the effects.
         """
-        # TODO: Confirm whether this needs to take in a list of effects
+
         def effect_callback(effect: Effects):
             if effect == Effects.Freezing:
                 self.handle_cold_damage()
@@ -342,8 +391,7 @@ class Character(Entity):
         """
         Stops the character.
         """
-        # TODO: Implement interval fields logic
-        pass
+        self.stop_intervals()
 
     def hit(self, damage: int, attacker: Optional["Character"] = None, aoe: int = 0, is_thorns: bool = False) -> None:
         """
@@ -397,7 +445,13 @@ class Character(Entity):
         if not target and not self.has_target():
             return
 
-        target_instance = target.instance if target else self.target.instance
+        target_instance = ""
+        if target:
+            target_instance = target.instance
+        elif self.target:
+            target_instance = self.target.instance
+        else:
+            return
         self.send_to_regions(
             MovementPacket(
                 Opcodes.Movement.Follow,
@@ -408,7 +462,7 @@ class Character(Entity):
             )
         )
 
-    def teleport(self, x: int, y: int, with_animation: bool = False) -> None:
+    async def teleport(self, x: int, y: int, with_animation: bool = False) -> None:
         """
         Teleports the character.
         """
@@ -425,11 +479,8 @@ class Character(Entity):
             )
         )
 
-        # TODO: Implement setTimeout for untoggling teleporting flag
-        # For now, just set it to False or leave it as True if we want to mimic the delay later.
-        # In Python we might use asyncio.sleep if this was an async method.
-        # Since it's not, we might need a different approach or just leave it for now.
-        # setTimeout(() => (this.teleporting = false), 500);
+        await asyncio.sleep(0.5)
+        self.teleporting = False
 
     def countdown(self, time_val: int) -> None:
         """
@@ -837,13 +888,15 @@ class Character(Entity):
 
         exists = type_val is not None and self.poison is not None
 
-        self.poison = None if remove else Poison(PoisonTypes(type_val), start)
+        if type_val is not None:
+            self.poison = Poison(PoisonTypes(type_val), start)
+        else:
+            self.poison = None
 
-        # TODO: Implement interval fields logic for poison
-        # if remove:
-        #     self.stop_poison_interval()
-        # elif not exists:
-        #     self.start_poison_interval()
+        if remove:
+            self.stop_poison_interval()
+        elif not exists:
+            self.start_poison_interval()
 
         if self.poison_callback:
             self.poison_callback(type_val, not exists)
