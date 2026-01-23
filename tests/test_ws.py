@@ -8,20 +8,33 @@ async def test_connection():
         async with websockets.connect(uri) as websocket:
             print("Connected to server")
             
-            # Send a test message
-            test_msg = {"type": "ping"}
-            await websocket.send(json.dumps(test_msg))
-            print(f"Sent: {test_msg}")
-            
-            # Since the server doesn't have Player logic yet, it won't echo back
-            # but we can check if it stays open or closes
+            # The server sends a list of packets. 
+            # Upon connection, we expect a ConnectedPacket (ID 0).
             try:
-                # Wait a bit to see if we get disconnected for some reason
-                await asyncio.wait_for(websocket.recv(), timeout=2.0)
+                # Wait for the first message from the server
+                message = await asyncio.wait_for(websocket.recv(), timeout=5.0)
+                packets = json.loads(message)
+                print(f"Received: {packets}")
+                
+                # The server sends packets as a list of serialized packets: [[id, data], ...]
+                # ConnectedPacket is [0, None]
+                found_connected = False
+                for packet in packets:
+                    if isinstance(packet, list) and packet[0] == 0:
+                        found_connected = True
+                        break
+                
+                if found_connected:
+                    print("SUCCESS: Received ConnectedPacket from server.")
+                else:
+                    print("FAILURE: ConnectedPacket not found in the received message.")
+                
             except asyncio.TimeoutError:
-                print("No message received (expected since Player logic is missing)")
+                print("FAILURE: Timeout waiting for ConnectedPacket from server.")
             except websockets.exceptions.ConnectionClosed as e:
                 print(f"Connection closed by server: {e.code} {e.reason}")
+            except Exception as e:
+                print(f"Error while receiving: {e}")
                 
     except Exception as e:
         print(f"Failed to connect: {e}")
