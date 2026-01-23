@@ -102,13 +102,13 @@ class EntityData(CamelModel):
     hidden_name: Optional[bool] = None
     orientation: Optional[Orientation] = None
 
-    # TODO: Item data
-    # count: Optional[int] = None
-    # enchantments: Optional[Enchantments] = None
+    # Item data
+    count: Optional[int] = None
+    enchantments: Optional[Enchantments] = None
 
-    # TODO: Projectile data
-    # owner_instance: Optional[str] = None
-    # target_instance: Optional[str] = None
-    # hit: Optional[HitData] = None
+    # Projectile data
+    owner_instance: Optional[str] = None
+    target_instance: Optional[str] = None
+    hit: Optional[HitData] = None
 
     display_info: Optional[EntityDisplayInfo] = None

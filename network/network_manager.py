@@ -88,8 +88,8 @@ class NetworkManager:
                 return
 
         # Create the player instance finally.
-        log.info(f"Player instance would be created here for {connection.address}")
-        # TODO: new Player(self.world, self.database, connection)
+        from game.entity.character.player.player import Player
+        Player(self.world, connection)
 
     def get_last_connection(self, connection: Connection) -> int:
         address_info = self.socket_handler.addresses.get(connection.address)
