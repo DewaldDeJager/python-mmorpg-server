@@ -82,3 +82,16 @@ class MongoDB:
 
     def on_fail(self, callback):
         self.fail_callback = callback
+
+    async def is_ip_banned(self, ip: str) -> bool:
+        """
+        Checks whether or not an IP string is contained within the database collection
+        for IP bans.
+
+        :param ip: The IP string that we are checking for.
+        :return: True if the IP is banned, False otherwise.
+        """
+        # TODO: Implement database query for IP bans
+        # cursor = self.database.ipbans.find({"ip": ip})
+        # return await cursor.to_list(length=1) is not None
+        return False

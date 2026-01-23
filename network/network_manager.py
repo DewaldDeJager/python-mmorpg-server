@@ -52,15 +52,9 @@ class NetworkManager:
         We create a player instance when we receive a connection and begin a
         handshake with the client.
         """
-        # In original, it checks if IP is banned.
-        # Since database logic might be complex and not fully known, 
-        # we'll assume a simple check or a TODO if not available.
-        
-        is_banned = False
-        if hasattr(self.database, 'is_ip_banned'):
-            # This is likely async in our Python implementation
-            is_banned = await self.database.is_ip_banned(connection.address)
-        
+        # Ensure that the connection is not banned.
+        is_banned = await self.database.is_ip_banned(connection.address) if self.database else False
+
         if is_banned:
             await connection.reject('banned')
             return
