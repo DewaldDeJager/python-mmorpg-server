@@ -32,9 +32,26 @@ class World:
 
     def push(self, packet_type: PacketType, data: PacketData) -> None:
         """
-        Push a packet to the network queue.
+        All packets are sent through this function. Here we organize who we send the packet to,
+        and perform further data checking (in the future if necessary).
+        @param packet_type The method we are sending the packet.
+        @param data The data containing information about who the packet is sent to.
         """
-        pass
+        if packet_type == PacketType.Broadcast:
+            self.network_manager.broadcast(data.packet)
+        elif packet_type == PacketType.Player:
+            if data.player:
+                self.network_manager.send(data.player.connection.instance, data.packet)
+        elif packet_type == PacketType.Players:
+            if data.players:
+                instances = [player.connection.instance for player in data.players]
+                self.network_manager.send_to_players(instances, data.packet)
+        elif packet_type == PacketType.Region:
+            if data.region:
+                self.network_manager.send_to_region(data.region, data.packet, data.ignore)
+        elif packet_type == PacketType.Regions:
+            if data.region:
+                self.network_manager.send_to_surrounding_regions(data.region, data.packet, data.ignore)
 
     def is_full(self) -> bool:
         """
