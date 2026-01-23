@@ -1,5 +1,7 @@
 import time
-from typing import Dict, Optional, Callable
+from typing import Dict, Optional, TYPE_CHECKING
+if TYPE_CHECKING:
+    from game.world import ConnectionCallback
 from common.log import log
 from network.connection import Connection
 from network.modules import Constants
@@ -21,7 +23,7 @@ class SocketHandler:
         # List of all connections to the server, keyed by instance ID.
         self.connections: Dict[str, Connection] = {}
         
-        self.connection_callback: Optional[Callable[[Connection], None]] = None
+        self.connection_callback: Optional[ConnectionCallback] = None
 
     def add(self, connection: Connection):
         """
@@ -94,7 +96,7 @@ class SocketHandler:
             self.addresses[address] = AddressInfo()
         self.addresses[address].last_time = int(time.time() * 1000)
 
-    def on_connection(self, callback: Callable[[Connection], None]):
+    def on_connection(self, callback: ConnectionCallback):
         """
         The callback for when a new connection is received.
         """
