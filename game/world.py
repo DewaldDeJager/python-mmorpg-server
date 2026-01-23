@@ -86,12 +86,20 @@ class World:
 
         log.debug(f"{config.name} {config.server_id} has successfully saved.")
 
+    def get_population(self) -> int:
+        """
+        Returns the number of players currently logged in.
+        @returns Number of players logged in.
+        """
+        # TODO: Implement player tracking via Entities controller
+        return 0
+
     def is_full(self) -> bool:
         """
-        Checks if the world has reached its maximum player capacity.
+        Checks if the world is full.
+        @returns True if the number of players is equal to the max players.
         """
-        # TODO: Implement player counting when player management is added
-        return False
+        return self.get_population() >= self.max_players
 
     def on_connection(self, callback: ConnectionCallback) -> None:
         """
