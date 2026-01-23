@@ -7,6 +7,7 @@ from network.impl.connected import ConnectedPacket
 from game.packet_data import PacketData
 from network.modules import PacketType
 from network.packet import Packet
+from game.entity.character.player.incoming import Incoming
 
 
 class Player(Character):
@@ -16,6 +17,8 @@ class Player(Character):
 
         self.world = world
         self.connection = connection
+
+        self.incoming = Incoming(self)
 
         self.connection.on_close(self.handle_close)
 
