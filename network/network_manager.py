@@ -6,6 +6,7 @@ from common.config import config
 if TYPE_CHECKING:
     from game.world import World
 from network.connection import Connection
+from network.packet import Packet
 
 
 class NetworkManager:
@@ -98,39 +99,37 @@ class NetworkManager:
 
     # Broadcasting and Socket Communication
 
-    def broadcast(self, packet: Any):
+    def broadcast(self, packet: Packet):
         """
         Broadcasts a packet to the entire server.
         """
-        # Original: serializedPacket = packet.serialize()
-        # For now we assume packet is already something we can send or has a serialize method
-        serialized = packet.serialize() if hasattr(packet, 'serialize') else packet
+        serialized = packet.serialize()
         
         for queue in self.packets.values():
             queue.append(serialized)
 
-    def send(self, instance: str, packet: Any):
+    def send(self, instance: str, packet: Packet):
         """
         Send a packet to a player's connection.
         """
         if instance not in self.packets:
             return
 
-        serialized = packet.serialize() if hasattr(packet, 'serialize') else packet
+        serialized = packet.serialize()
         self.packets[instance].append(serialized)
 
-    def send_to_players(self, instances: List[str], packet: Any):
+    def send_to_players(self, instances: List[str], packet: Packet):
         for instance in instances:
             self.send(instance, packet)
 
-    def send_to_region(self, region_id: int, packet: Any, ignore: Optional[str] = None):
+    def send_to_region(self, region_id: int, packet: Packet, ignore: Optional[str] = None):
         if not self.regions:
             return
             
         # TODO: Implement region logic when Regions class is available
         pass
 
-    def send_to_surrounding_regions(self, region_id: int, packet: Any, ignore: Optional[str] = None):
+    def send_to_surrounding_regions(self, region_id: int, packet: Packet, ignore: Optional[str] = None):
         if region_id < 0 or not self.regions:
             return
             
