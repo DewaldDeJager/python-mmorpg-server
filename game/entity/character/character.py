@@ -4,7 +4,11 @@ import math
 import asyncio
 from abc import abstractmethod
 from datetime import datetime
-from typing import List, Optional, Callable, Dict, override, Any
+from typing import List, Optional, Callable, Dict, override, Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from game.world import World
+from game.packet_data import PacketData
 
 from common.utils import Utils
 from game.entity.entity import Entity

@@ -1,20 +1,9 @@
-from typing import List, Optional, TYPE_CHECKING
+from __future__ import annotations
 from network.socket_handler import SocketHandler
 from database.database_manager import Database
 from network.packet import Packet
 from network.modules import PacketType
-from network.model import CamelModel
-
-if TYPE_CHECKING:
-    from game.entity.character.player.player import Player
-
-class PacketData(CamelModel):
-    packet: Packet
-    player: Optional["Player"] = None
-    players: Optional[List["Player"]] = None
-    ignore: str = ""
-    region: Optional[int] = None
-    list: Optional[List[int]] = None
+from game.packet_data import PacketData
 
 class World:
     """
