@@ -11,8 +11,10 @@ The server uses **FastAPI**'s WebSocket support to handle incoming connections.
     1. A unique `instance_id` (format: `{{type}}-{{id}}`) is generated.
     2. A `Connection` wrapper is created for the `WebSocket` object.
     3. The connection is registered with the `SocketHandler`.
-    4. The `NetworkManager` is notified to handle initial connection logic (e.g., ban checks).
-    5. A message loop is started to receive and process messages from the client.
+    4. Registration triggers the `on_connection` callback in `Main`, which validates server status and world capacity.
+    5. If valid, `Main` calls `World.connection_callback`, which defaults to `NetworkManager.handle_connection`.
+    6. `NetworkManager` performs final checks (bans, rate limits) and instantiates the `Player`.
+    7. A message loop is started in `main.py` to receive and process messages from the client.
 
 ## 2. Connection Wrapper (`network/connection.py`)
 
@@ -85,8 +87,16 @@ The `NetworkManager` class resides in the game logic layer and orchestrates comm
 
 ## Summary Flow
 
-1. **Client Connects** → FastAPI `/ws` endpoint accepts → Creates `Connection` wrapper.
-2. **Validation** → `SocketHandler` tracks IP → `NetworkManager` checks bans/limits.
-3. **Game Start** → `NetworkManager` prepares for `Player` entity instantiation.
-4. **Input** → FastAPI receives data → `Connection` filters/checks rate → Message callback invoked (e.g., `Player` handles packet).
-5. **Output** → Game Logic queues packets via `NetworkManager` → `NetworkManager.parse()` flushes to `Connection` → `Connection` sends via FastAPI WebSocket.
+1. **Client Connects**: The client initiates a WebSocket connection to the `/ws` endpoint in `main.py`.
+2. **Connection Creation**: FastAPI accepts the connection, and a `Connection` wrapper is created with a unique `instance_id`.
+3. **Registration**: The `Connection` is added to `SocketHandler`, which triggers its `on_connection` callback.
+4. **Main Validation**: `Main.handle_connection` (the registered callback) performs initial server-level checks:
+    - Is the server ready?
+    - Are connections allowed in the world?
+    - Is the world full?
+5. **World Handover**: If valid, `Main` calls `World.connection_callback`.
+6. **Network Manager Validation**: `World.connection_callback` (pointing to `NetworkManager.handle_connection`) performs final networking checks:
+    - Is the IP banned?
+    - Is the connection attempt too fast (rate limiting)?
+    - Has the IP reached maximum allowed connections?
+7. **Player Instantiation**: If all checks pass, the `Player` object is instantiated, the `ConnectedPacket` is sent, and the message loop begins.

@@ -1,9 +1,12 @@
+from __future__ import annotations
 import time
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, TYPE_CHECKING
+
 from common.config import config
-from common.log import log
+if TYPE_CHECKING:
+    from game.world import World
 from network.connection import Connection
-from network.socket_handler import SocketHandler
+
 
 class NetworkManager:
     """
@@ -11,9 +14,10 @@ class NetworkManager:
     communication between the World and the SocketHandler.
     """
 
-    def __init__(self, database, socket_handler: SocketHandler):
-        self.database = database
-        self.socket_handler = socket_handler
+    def __init__(self, world: World):
+        self.world = world
+        self.database = world.database
+        self.socket_handler = world.socket_handler
         
         # In the original, world.map.regions is used. 
         # For now, we'll leave it as None until World/Regions are implemented.

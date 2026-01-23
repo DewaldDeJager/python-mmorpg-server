@@ -1,3 +1,4 @@
+from __future__ import annotations
 import time
 import random
 import math
@@ -22,7 +23,6 @@ from network.modules import Constants, Defaults, Orientation, Hits, Effects, Pac
 from network.shared_types import EntityData, Stats, Bonuses
 from network import opcodes as Opcodes, AttackStyle
 
-from game.world import World, PacketData
 from network.impl.movement import MovementPacket, MovementPacketData
 from network.impl.teleport import TeleportPacket, TeleportPacketData
 from network.impl.points import PointsPacket, PointsPacketData

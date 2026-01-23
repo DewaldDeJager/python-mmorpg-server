@@ -6,24 +6,46 @@ from contextlib import asynccontextmanager
 from common.config import config
 from common.log import log
 from database.database_manager import Database
+from game.world import World
 from network.socket_handler import SocketHandler
-from network.network_manager import NetworkManager
 from network.connection import Connection
 from network.modules import EntityType
 from common.utils import utils
 from game.info.loader import Loader
 from fastapi import WebSocket, WebSocketDisconnect
 
+
 class Main:
     def __init__(self):
+        self.world = None
         self.database = Database(config.database).get_database()
         self.ready = False
         self.socket_handler = SocketHandler()
-        self.network = NetworkManager(self.database, self.socket_handler)
+
+        self.socket_handler.on_connection(self.handle_connection)
 
         if self.database:
             self.database.on_ready(self.handle_ready)
             self.database.on_fail(self.handle_fail)
+
+    def handle_connection(self, connection: Connection):
+        """
+        We handle each new connection here. We check if the world is full,
+        and if there is room, we make a callback in the world to handle the rest.
+        @param connection The new connection we received from the WebSocket.
+        """
+        if not self.ready or not self.world or not self.world.allow_connections:
+            asyncio.create_task(connection.reject('disallowed'))
+            return
+
+        if self.world.is_full():
+            log.notice("The world is currently full, connections are being rejected.")
+            asyncio.create_task(connection.reject('worldfull'))
+            return
+
+        if self.world.connection_callback:
+            log.debug(f"Handling connection with callback for {connection.instance}.")
+            asyncio.create_task(self.world.connection_callback(connection))
 
     async def start(self):
         if not self.handle_licensing():
@@ -41,7 +63,8 @@ class Main:
     def handle_ready(self, without_database: bool = False):
         self.ready = True
 
-        # self.load_world() # To be implemented later
+        log.info(f"************** {config.name} World **************")
+        self.world = World(self.socket_handler, self.database)
 
         if without_database:
             log.notice("Running without database - Server is now accepting connections.")
@@ -81,15 +104,18 @@ async def lifespan(app: FastAPI):
     # Shutdown logic (e.g., saving players)
     log.info("Shutting down game engine.")
 
+
 app = FastAPI(lifespan=lifespan)
 
 @app.get("/")
 async def root():
     return {"message": f"Python {config.name} Server"}
 
+
 @app.get("/health")
 async def health_check():
     return {"status": "ok", "ready": main_instance.ready}
+
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -100,10 +126,8 @@ async def websocket_endpoint(websocket: WebSocket):
     connection = Connection(instance_id, websocket)
 
     # Register the connection in the socket handler
+    # This will trigger Main.handle_connection via the on_connection callback
     main_instance.socket_handler.add(connection)
-
-    # Notify the network manager about the new connection
-    await main_instance.network.handle_connection(connection)
 
     try:
         while not connection.closed:
@@ -112,7 +136,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
             # Rate limiting check
             connection.message_rate += 1
-            if connection.message_rate > 50: # Example limit
+            if connection.message_rate > 50:  # Example limit
                 await connection.reject("spam")
                 break
 
@@ -142,6 +166,8 @@ async def websocket_endpoint(websocket: WebSocket):
     finally:
         main_instance.socket_handler.remove(instance_id)
 
+
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host=config.host, port=config.port, reload=config.debugging)
