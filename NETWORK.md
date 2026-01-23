@@ -51,6 +51,10 @@ The `NetworkManager` class resides in the game logic layer and orchestrates comm
     - Entire Map Regions (`send_to_region`, `send_to_surrounding_regions`)
     - All Players (`broadcast`)
 
+## 5. WebSocket Protocol
+
+For a detailed breakdown of the WebSocket protocol, including packet formats, batching, and the connection handshake flow, see [WEBSOCKETS.md](WEBSOCKETS.md).
+
 ## Architecture Diagram
 
 ```text

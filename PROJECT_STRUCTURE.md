@@ -8,7 +8,7 @@ This document provides an overview of the directory structure and the purpose of
 - `pyproject.toml`: Configuration for the Python project, including dependencies and tool settings (used by `uv`).
 - `Dockerfile` & `docker-compose.yml`: Configuration for containerizing the application and its dependencies (like MongoDB).
 - `README.md`: General project overview and setup instructions.
-- `DATABASE.md`, `ENTITY.md`, `NETWORK.md`: Specialized documentation for specific subsystems.
+- `DATABASE.md`, `ENTITY.md`, `NETWORK.md`, `WEBSOCKETS.md`: Specialized documentation for specific subsystems.
 - `ROADMAP.md`: Project goals and planned features.
 - `Kaetram-Open/`: The original TypeScript implementation of Kaetram, used as a reference for logic and structure.
 
