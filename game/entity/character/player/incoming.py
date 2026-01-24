@@ -103,7 +103,7 @@ class Incoming:
         elif opcode == Login.Guest:
             log.notice("Guest login request received.")
             self.player.authenticated = True
-            self.player.guest = True
+            self.player.is_guest = True
             self.player.username = Utils.get_guest_username()
 
             # TODO: Load the default player data
