@@ -3,6 +3,8 @@ import time
 from typing import Dict, List, Any, Optional, TYPE_CHECKING
 
 from common.config import config
+from network.impl import ConnectedPacket
+
 if TYPE_CHECKING:
     from game.world import World
 from network.connection import Connection
@@ -85,6 +87,9 @@ class NetworkManager:
         # Create the player instance finally.
         from game.entity.character.player.player import Player
         Player(self.world, connection)
+
+        # Send the connected packet, begin the handshake process.
+        await connection.send([ConnectedPacket().serialize()])
 
     def get_last_connection(self, connection: Connection) -> int:
         address_info = self.socket_handler.addresses.get(connection.address)

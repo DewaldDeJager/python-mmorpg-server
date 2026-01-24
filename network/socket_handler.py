@@ -25,7 +25,7 @@ class SocketHandler:
         
         self.connection_callback: Optional[ConnectionCallback] = None
 
-    def add(self, connection: Connection):
+    async def add(self, connection: Connection):
         """
         Adds a connection to our dictionary of connections.
         """
@@ -33,7 +33,7 @@ class SocketHandler:
         self.add_address(connection.address)
         
         if self.connection_callback:
-            self.connection_callback(connection)
+            await self.connection_callback(connection)
 
     def add_address(self, address: str):
         """

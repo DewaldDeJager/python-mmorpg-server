@@ -28,24 +28,24 @@ class Main:
             self.database.on_ready(self.handle_ready)
             self.database.on_fail(self.handle_fail)
 
-    def handle_connection(self, connection: Connection):
+    async def handle_connection(self, connection: Connection):
         """
         We handle each new connection here. We check if the world is full,
         and if there is room, we make a callback in the world to handle the rest.
         @param connection The new connection we received from the WebSocket.
         """
         if not self.ready or not self.world or not self.world.allow_connections:
-            asyncio.create_task(connection.reject('disallowed'))
+            await connection.reject('disallowed')
             return
 
         if self.world.is_full():
             log.notice("The world is currently full, connections are being rejected.")
-            asyncio.create_task(connection.reject('worldfull'))
+            await connection.reject('worldfull')
             return
 
         if self.world.connection_callback:
             log.debug(f"Handling connection with callback for {connection.instance}.")
-            asyncio.create_task(self.world.connection_callback(connection))
+            await self.world.connection_callback(connection)
 
     async def start(self):
         if not self.handle_licensing():
@@ -127,7 +127,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
     # Register the connection in the socket handler
     # This will trigger Main.handle_connection via the on_connection callback
-    main_instance.socket_handler.add(connection)
+    await main_instance.socket_handler.add(connection)
 
     try:
         while not connection.closed:
@@ -151,7 +151,7 @@ async def websocket_endpoint(websocket: WebSocket):
             try:
                 message = json.loads(data)
                 if connection.message_callback:
-                    connection.message_callback(message)
+                    await connection.message_callback(message)
                 else:
                     # Fallback if no callback is registered yet (e.g. before Player is created)
                     log.debug(f"Received message from {connection.address} without callback: {message}")

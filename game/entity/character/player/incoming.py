@@ -26,7 +26,7 @@ class Incoming:
 
         self.connection.on_message(self.handle_message)
 
-    def handle_message(self, message: Any):
+    async def handle_message(self, message: Any):
         # TODO: Improve the validation and type checking
         # The message is typically a list [packet_id, data] or [packet_id, opcode, data]
         if not isinstance(message, list) or len(message) < 2:
@@ -42,11 +42,11 @@ class Incoming:
         try:
             if not self.completed_handshake and packet_id != Packets.Handshake:
                 log.warning(f"Received packet {packet_id} before handshake was completed.")
-                self.connection.reject("lost")
+                await self.connection.reject("lost")
             if packet_id == Packets.Handshake:
-                self.handle_handshake(data)
+                await self.handle_handshake(data)
             elif packet_id == Packets.Login:
-                self.handle_login(data)
+                await self.handle_login(data)
             elif packet_id == Packets.Ready:
                 pass
             elif packet_id == Packets.Focus:
@@ -57,7 +57,7 @@ class Incoming:
         except Exception as e:
             log.error(f"Error handling packet {packet_id}: {e}")
 
-    def handle_handshake(self, data: Dict[str, Any]):
+    async def handle_handshake(self, data: Dict[str, Any]):
         """
         The handshake is responsible for verifying the integrity of the client initially.
         We ensure that the client is on the right version and reject it if it is not.
@@ -66,11 +66,7 @@ class Incoming:
         
         if game_version != config.gver:
             log.warning(f"Client version mismatch: {game_version} != {config.gver}")
-            # In Connection.py, reject is async, but we are in a sync callback.
-            # However, Incoming in TS is also sync and it calls connection.reject which might be async there too.
-            # In our main.py, it's called in an async loop.
-            import asyncio
-            asyncio.create_task(self.connection.reject("updated"))
+            await self.connection.reject("updated")
             return
 
         self.completed_handshake = True
@@ -83,10 +79,9 @@ class Incoming:
             server_time=int(time.time() * 1000) # Using milliseconds
         )
         
-        import asyncio
-        asyncio.create_task(self.connection.send([HandshakePacket(handshake_data).serialize()]))
+        await self.connection.send([HandshakePacket(handshake_data).serialize()])
 
-    def handle_login(self, data: Dict[str, Any]):
+    async def handle_login(self, data: Dict[str, Any]):
         # Login example: [{'opcode': 0, 'password': 'password', 'username': 'DearVolt'}]
         # Register example: [{'opcode': 0, 'password': 'password', 'username': 'DearVolt', 'email': 'example@example.com'}]
         # Guest example: [{'opcode': 2}]
@@ -107,6 +102,6 @@ class Incoming:
             self.player.username = Utils.get_guest_username()
 
             # TODO: Load the default player data
-            # self.player.load(Creator.serialize(self.player))
+            # await self.player.load(Creator.serialize(self.player))
         else:
             log.warning(f"Received unknown login opcode {opcode}.")

@@ -65,8 +65,6 @@ class Player(Character):
 
         self.connection.on_close(self.handle_close)
 
-        # Send the connected packet, begin the handshake process.
-        self.send(ConnectedPacket())
 
     async def load(self, data: PlayerInfo) -> None:
         """

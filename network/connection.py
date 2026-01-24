@@ -1,8 +1,8 @@
 import asyncio
 import json
 import time
-from typing import Any, Callable, Optional
-from fastapi import WebSocket, WebSocketDisconnect
+from typing import Any, Callable, Optional, Awaitable
+from fastapi import WebSocket
 from common.log import log
 
 class Connection:
@@ -30,8 +30,8 @@ class Connection:
         
         self.closed = False
         
-        self.message_callback: Optional[Callable[[Any], None]] = None
-        self.close_callback: Optional[Callable[[], None]] = None
+        self.message_callback: Optional[Callable[[Any], Awaitable[None]]] = None
+        self.close_callback: Optional[Callable[[], Optional[Awaitable[None]]]] = None
 
         # Reset the messages per second every second.
         self.rate_task = asyncio.create_task(self._rate_limiter_loop())
@@ -102,7 +102,8 @@ class Connection:
             log.info(f"Received reason: {reason}.")
 
         self.closed = True
-        
+
+        # TODO: Do we need both branches here or will it always go into the one?
         if self.close_callback:
             if asyncio.iscoroutinefunction(self.close_callback):
                 await self.close_callback()
@@ -183,8 +184,8 @@ class Connection:
             log.error(f"Failed to send message to {self.address}: {e}")
             await self.handle_close("send_failure")
 
-    def on_message(self, callback: Callable[[Any], None]):
+    def on_message(self, callback: Callable[[Any], Awaitable[None]]):
         self.message_callback = callback
 
-    def on_close(self, callback: Callable[[], None]):
+    def on_close(self, callback: Callable[[], Optional[Awaitable[None]]]):
         self.close_callback = callback
