@@ -4,6 +4,9 @@ import time
 
 from common.config import config
 from common.log import log
+from common.utils import Utils
+from database.mongodb_creator import Creator
+from network import Login
 from network.impl.handshake import HandshakePacket, ClientHandshakePacketData
 from network.packets import Packets
 
@@ -30,23 +33,26 @@ class Incoming:
             log.error(f"Invalid message format received: {message}")
             return
 
-        packet_id = -1
-        data = None
-        if len(message) == 2:
-            packet_id, data = message
-        elif len(message) == 3:
-            packet_id, opcode, data = message
+        # Example message: [2, {'opcode': 2, 'foo': 'bar'}]
+        packet_id = message[0]
+        data = message[1] if len(message) > 1 else None
+
+        self.connection.refresh_timeout()
 
         try:
             if not self.completed_handshake and packet_id != Packets.Handshake:
                 log.warning(f"Received packet {packet_id} before handshake was completed.")
-                return
+                self.connection.reject("lost")
             if packet_id == Packets.Handshake:
                 self.handle_handshake(data)
             elif packet_id == Packets.Login:
-                pass
+                self.handle_login(data)
             elif packet_id == Packets.Ready:
                 pass
+            elif packet_id == Packets.Focus:
+                pass
+            else:
+                log.warning(f"Received unknown packet {packet_id}.")
 
         except Exception as e:
             log.error(f"Error handling packet {packet_id}: {e}")
@@ -79,3 +85,28 @@ class Incoming:
         
         import asyncio
         asyncio.create_task(self.connection.send([HandshakePacket(handshake_data).serialize()]))
+
+    def handle_login(self, data: Dict[str, Any]):
+        # Login example: [{'opcode': 0, 'password': 'password', 'username': 'DearVolt'}]
+        # Register example: [{'opcode': 0, 'password': 'password', 'username': 'DearVolt', 'email': 'example@example.com'}]
+        # Guest example: [{'opcode': 2}]
+        opcode = data.get("opcode")
+        username = data.get("username")
+        password = data.get("password")
+        email = data.get("email")
+
+        if opcode == Login.Login:
+            log.notice(f"Login request received with {data=}.")
+            pass
+        elif opcode == Login.Register:
+            log.notice(f"Register request received with {data=}.")
+        elif opcode == Login.Guest:
+            log.notice("Guest login request received.")
+            self.player.authenticated = True
+            self.player.guest = True
+            self.player.username = Utils.get_guest_username()
+
+            # TODO: Load the default player data
+            # self.player.load(Creator.serialize(self.player))
+        else:
+            log.warning(f"Received unknown login opcode {opcode}.")

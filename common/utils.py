@@ -17,6 +17,12 @@ class Utils:
         cls._counter += 1
         return f"{identifier.value}-{random.randint(1000, 100_000)}{cls._counter}"
 
+    @classmethod
+    def get_guest_username(cls) -> str:
+        username = f"guest{cls._counter}"
+        cls._counter += 1
+        return username
+
     @staticmethod
     def get_empty_stats() -> Stats:
         """
