@@ -101,7 +101,6 @@ class Incoming:
             self.player.is_guest = True
             self.player.username = Utils.get_guest_username()
 
-            # TODO: Load the default player data
-            # await self.player.load(Creator.serialize(self.player))
+            await self.player.load(Creator.serialize(self.player))
         else:
             log.warning(f"Received unknown login opcode {opcode}.")

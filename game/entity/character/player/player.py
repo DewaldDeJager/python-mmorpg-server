@@ -93,8 +93,9 @@ class Player(Character):
         self.regions_loaded = data.regions_loaded or []
         # self.last_global_chat = data.last_global_chat or 0
 
-        self.set_poison(PoisonTypes(data.poison.type) if data.poison.type else None,
-                        datetime.fromtimestamp((datetime.now().timestamp() * 1000 - data.poison.remaining) / 1000))
+        if data.poison:
+            self.set_poison(PoisonTypes(data.poison.type) if data.poison.type else None,
+                            datetime.fromtimestamp((datetime.now().timestamp() * 1000 - data.poison.remaining) / 1000))
         self.set_last_warp(data.last_warp)
 
         self.hit_points.update_hit_points(data.hit_points)

@@ -30,7 +30,7 @@ class PlayerInfo(CamelModel):
     y: int
     user_agent: str
     rank: Ranks
-    poison: PoisonInfo
+    poison: Optional[PoisonInfo]
     effects: SerializedEffects
     hit_points: int
     mana: int
