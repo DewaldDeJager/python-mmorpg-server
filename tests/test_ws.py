@@ -11,7 +11,7 @@ from common.config import config
 from network.packets import Packets
 
 async def test_connection():
-    uri = f"ws://{config.host}:{config.port}/ws"
+    uri = f"ws://{config.host}:{config.port}/"
     try:
         async with websockets.connect(uri) as websocket:
             print("Connected to server")

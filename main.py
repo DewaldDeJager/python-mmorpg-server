@@ -117,7 +117,7 @@ async def health_check():
     return {"status": "ok", "ready": main_instance.ready}
 
 
-@app.websocket("/ws")
+@app.websocket("/")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
 
